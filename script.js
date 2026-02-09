@@ -69,7 +69,13 @@ class ConstellationBuilder {
             connections: this.connections,
             nextStarId: this.nextStarId
         };
-        localStorage.setItem('constellationBuilderData', JSON.stringify(data));
+        console.log('Saving to storage:', data);
+        try {
+            localStorage.setItem('constellationBuilderData', JSON.stringify(data));
+            console.log('Successfully saved to localStorage');
+        } catch (e) {
+            console.error('Error saving to localStorage:', e);
+        }
     }
 
     bindEvents() {
@@ -102,7 +108,11 @@ class ConstellationBuilder {
         });
 
         document.getElementById('cancelStar').addEventListener('click', () => this.closeModal('starModal'));
-        document.getElementById('saveStar').addEventListener('click', () => this.saveStar());
+        document.getElementById('saveStar').addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.saveStar();
+        });
         document.getElementById('closeHelp').addEventListener('click', () => this.closeModal('helpModal'));
         document.getElementById('cancelExport').addEventListener('click', () => this.closeModal('exportModal'));
 
@@ -235,6 +245,7 @@ class ConstellationBuilder {
             createdAt: new Date().toISOString()
         };
         this.stars.push(star);
+        console.log('Created new star:', star);
         this.saveToStorage();
 
         // Open editor for new star
@@ -271,6 +282,7 @@ class ConstellationBuilder {
 
     editStar(star) {
         this.currentStar = star;
+        console.log('Editing star:', star);
 
         document.getElementById('starTitle').value = star.title || '';
         document.getElementById('starDescription').value = star.description || '';
@@ -280,15 +292,19 @@ class ConstellationBuilder {
     }
 
     saveStar() {
-        if (!this.currentStar) return;
+        if (!this.currentStar) {
+            console.error('No star to save');
+            return;
+        }
 
-        this.currentStar.title = document.getElementById('starTitle').value;
-        this.currentStar.description = document.getElementById('starDescription').value;
+        this.currentStar.title = document.getElementById('starTitle').value || 'Untitled';
+        this.currentStar.description = document.getElementById('starDescription').value || '';
         this.currentStar.tags = document.getElementById('starTags').value
             .split(',')
             .map(tag => tag.trim())
             .filter(tag => tag);
 
+        console.log('Saving star:', this.currentStar);
         this.saveToStorage();
         this.closeModal('starModal');
     }
