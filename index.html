@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constellation Builder - Connect Your Ideas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <span class="star-icon">✨</span>
+                <h1>Constellation Builder</h1>
+            </div>
+            <div class="actions">
+                <button id="exportBtn" class="btn secondary">📥 Export</button>
+                <button id="clearBtn" class="btn secondary">🗑️ Clear All</button>
+                <button id="helpBtn" class="btn secondary">❓ Help</button>
+            </div>
+        </header>
+
+        <!-- Main Canvas Area -->
+        <main>
+            <div class="canvas-container">
+                <canvas id="constellationCanvas"></canvas>
+                <div id="canvasOverlay"></div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="tool-group">
+                    <span class="tool-label">Mode:</span>
+                    <button class="tool-btn active" data-mode="add" title="Click to add a star (idea)">
+                        <span class="icon">➕</span>
+                        <span class="text">Add Star</span>
+                    </button>
+                    <button class="tool-btn" data-mode="connect" title="Drag to connect stars">
+                        <span class="icon">🔗</span>
+                        <span class="text">Connect</span>
+                    </button>
+                    <button class="tool-btn" data-mode="move" title="Drag to move stars">
+                        <span class="icon">✋</span>
+                        <span class="text">Move</span>
+                    </button>
+                    <button class="tool-btn" data-mode="delete" title="Click to delete">
+                        <span class="icon">❌</span>
+                        <span class="text">Delete</span>
+                    </button>
+                </div>
+
+                <div class="tool-group">
+                    <span class="tool-label">Color:</span>
+                    <div class="color-picker">
+                        <button class="color-btn active" data-color="#ffffff" style="background: #ffffff; box-shadow: 0 0 10px #ffffff;"></button>
+                        <button class="color-btn" data-color="#ffd700" style="background: #ffd700; box-shadow: 0 0 10px #ffd700;"></button>
+                        <button class="color-btn" data-color="#00bfff" style="background: #00bfff; box-shadow: 0 0 10px #00bfff;"></button>
+                        <button class="color-btn" data-color="#ff6b6b" style="background: #ff6b6b; box-shadow: 0 0 10px #ff6b6b;"></button>
+                        <button class="color-btn" data-color="#98fb98" style="background: #98fb98; box-shadow: 0 0 10px #98fb98;"></button>
+                        <button class="color-btn" data-color="#dda0dd" style="background: #dda0dd; box-shadow: 0 0 10px #dda0dd;"></button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Star Editor Modal -->
+        <div id="starModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>✨ Edit Star</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="starTitle">Title</label>
+                        <input type="text" id="starTitle" placeholder="e.g., Project Alpha">
+                    </div>
+                    <div class="form-group">
+                        <label for="starDescription">Description</label>
+                        <textarea id="starDescription" rows="3" placeholder="Describe your idea..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="starTags">Tags (comma separated)</label>
+                        <input type="text" id="starTags" placeholder="e.g., idea, project, urgent">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" id="cancelStar">Cancel</button>
+                    <button class="btn primary" id="saveStar">Save Star</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Modal -->
+        <div id="helpModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>❓ How to Use Constellation Builder</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="help-section">
+                        <h3>🌟 Adding Stars</h3>
+                        <p>Select "Add Star" mode and click anywhere on the canvas to create a new star. Stars represent your ideas, thoughts, or concepts.</p>
+                    </div>
+                    <div class="help-section">
+                        <h3>🔗 Connecting Stars</h3>
+                        <p>Select "Connect" mode and drag from one star to another to create a glowing connection. Use colors to show different types of relationships.</p>
+                    </div>
+                    <div class="help-section">
+                        <h3>✋ Moving Stars</h3>
+                        <p>Select "Move" mode and drag stars to rearrange your constellation. All connections will move with them.</p>
+                    </div>
+                    <div class="help-section">
+                        <h3>✨ Editing Stars</h3>
+                        <p>Double-click any star to edit its title, description, and tags. This helps you organize and remember your ideas.</p>
+                    </div>
+                    <div class="help-section">
+                        <h3>📥 Exporting</h3>
+                        <p>Click "Export" to save your constellation as a PNG image or JSON backup. Your work is also automatically saved in your browser.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn primary" id="closeHelp">Got it!</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Modal -->
+        <div id="exportModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📥 Export Constellation</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="export-options">
+                        <button class="export-option" data-format="png">
+                            <span class="export-icon">🖼️</span>
+                            <span class="export-label">PNG Image</span>
+                            <span class="export-desc">Shareable image of your constellation</span>
+                        </button>
+                        <button class="export-option" data-format="json">
+                            <span class="export-icon">📄</span>
+                            <span class="export-label">JSON Backup</span>
+                            <span class="export-desc">Full data backup with all details</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" id="cancelExport">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
