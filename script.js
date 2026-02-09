@@ -107,12 +107,24 @@ class ConstellationBuilder {
             btn.addEventListener('click', () => this.closeAllModals());
         });
 
-        document.getElementById('cancelStar').addEventListener('click', () => this.closeModal('starModal'));
-        document.getElementById('saveStar').addEventListener('click', (e) => {
+        document.getElementById('cancelStar').addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            this.saveStar();
+            this.closeModal('starModal');
         });
+
+        // Save star button - attach directly with more defensive checks
+        const saveStarBtn = document.getElementById('saveStar');
+        if (saveStarBtn) {
+            saveStarBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                console.log('Save button clicked, currentStar:', this.currentStar);
+                this.saveStar();
+            }, true); // Use capture phase
+        }
+
         document.getElementById('closeHelp').addEventListener('click', () => this.closeModal('helpModal'));
         document.getElementById('cancelExport').addEventListener('click', () => this.closeModal('exportModal'));
 
@@ -121,7 +133,7 @@ class ConstellationBuilder {
             btn.addEventListener('click', (e) => this.exportData(e));
         });
 
-        // Close modals on backdrop click
+        // Close modals on backdrop click - make more specific
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
@@ -136,10 +148,12 @@ class ConstellationBuilder {
 
     handleCanvasClick(e) {
         const pos = this.getMousePos(e);
+        console.log('Canvas click at position:', pos, 'mode:', this.mode);
 
         if (this.mode === 'add') {
             const clickedStar = this.findStarAt(pos.x, pos.y);
             if (!clickedStar) {
+                console.log('Adding star at', pos);
                 this.addStar(pos.x, pos.y);
             }
         } else if (this.mode === 'delete') {
@@ -246,6 +260,12 @@ class ConstellationBuilder {
         };
         this.stars.push(star);
         console.log('Created new star:', star);
+        console.log('Stars array now has', this.stars.length, 'stars');
+
+        // Set currentStar immediately to prevent race conditions
+        this.currentStar = star;
+        console.log('Set currentStar to:', this.currentStar);
+
         this.saveToStorage();
 
         // Open editor for new star
@@ -281,14 +301,19 @@ class ConstellationBuilder {
     }
 
     editStar(star) {
+        console.log('editStar called with star:', star);
+        console.log('this.stars has', this.stars.length, 'stars');
+        console.log('Star is in array:', this.stars.some(s => s.id === star.id));
+
         this.currentStar = star;
-        console.log('Editing star:', star);
+        console.log('Set currentStar in editStar:', this.currentStar);
 
         document.getElementById('starTitle').value = star.title || '';
         document.getElementById('starDescription').value = star.description || '';
         document.getElementById('starTags').value = star.tags ? star.tags.join(', ') : '';
 
         this.showModal('starModal');
+        console.log('Modal opened, currentStar is still:', this.currentStar);
     }
 
     saveStar() {
