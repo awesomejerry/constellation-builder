@@ -116,6 +116,7 @@ class ConstellationBuilder {
         // Save star button - attach directly with more defensive checks
         const saveStarBtn = document.getElementById('saveStar');
         if (saveStarBtn) {
+            console.log('Save star button found, attaching event listener');
             saveStarBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -127,6 +128,8 @@ class ConstellationBuilder {
                 console.log('this.currentStar:', this.currentStar);
                 this.saveStar();
             }, true); // Use capture phase
+        } else {
+            console.error('Save star button not found!');
         }
 
         document.getElementById('closeHelp').addEventListener('click', () => this.closeModal('helpModal'));
