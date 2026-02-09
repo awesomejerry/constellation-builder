@@ -120,7 +120,11 @@ class ConstellationBuilder {
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
-                console.log('Save button clicked, currentStar:', this.currentStar);
+                console.log('=== SAVE BUTTON CLICKED ===');
+                console.log('this:', this);
+                console.log('this.stars:', this.stars);
+                console.log('this.stars.length:', this.stars.length);
+                console.log('this.currentStar:', this.currentStar);
                 this.saveStar();
             }, true); // Use capture phase
         }
@@ -317,8 +321,13 @@ class ConstellationBuilder {
     }
 
     saveStar() {
+        console.log('=== saveStar() called ===');
+        console.log('this:', this);
+        console.log('this.stars:', this.stars);
+        console.log('this.currentStar:', this.currentStar);
+
         if (!this.currentStar) {
-            console.error('No star to save');
+            console.error('No star to save - currentStar is null');
             return;
         }
 
@@ -407,6 +416,8 @@ class ConstellationBuilder {
     }
 
     showModal(modalId) {
+        console.log('=== showModal() called with modalId:', modalId, '===');
+        console.log('this.currentStar:', this.currentStar);
         document.getElementById(modalId).classList.remove('hidden');
         setTimeout(() => {
             document.getElementById(modalId).classList.add('visible');
