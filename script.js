@@ -216,6 +216,8 @@ class ConstellationBuilder {
     }
 
     handleMouseUp(e) {
+        console.log('[Instance', this.instanceId, '] handleMouseUp called, mode:', this.mode, 'currentStar before:', this.currentStar);
+
         if (this.mode === 'connect' && this.connectionStart) {
             const pos = this.getMousePos(e);
             const clickedStar = this.findStarAt(pos.x, pos.y);
@@ -231,7 +233,14 @@ class ConstellationBuilder {
 
         this.isDragging = false;
         this.connectionStart = null;
-        this.currentStar = null;
+
+        // Only reset currentStar if we're in move mode (dragging operation)
+        // Otherwise leave it alone (e.g., when editing a star in modal)
+        if (this.mode === 'move') {
+            this.currentStar = null;
+        }
+
+        console.log('[Instance', this.instanceId, '] handleMouseUp done, currentStar after:', this.currentStar);
     }
 
     handleKeyboard(e) {
