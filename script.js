@@ -99,6 +99,7 @@ class ConstellationBuilder {
         document.getElementById('clearBtn').addEventListener('click', () => this.clearAll());
         document.getElementById('helpBtn').addEventListener('click', () => this.showHelp());
         document.getElementById('exportBtn').addEventListener('click', () => this.showExport());
+        document.getElementById('connectByTagBtn').addEventListener('click', () => this.connectByTag());
 
         // Modal events
         document.querySelectorAll('.close-btn').forEach(btn => {
@@ -293,6 +294,43 @@ class ConstellationBuilder {
                 createdAt: new Date().toISOString()
             });
             this.saveToStorage();
+        }
+    }
+
+    connectByTag() {
+        // Group stars by tags
+        const tagGroups = {};
+
+        this.stars.forEach(star => {
+            if (star.tags && star.tags.length > 0) {
+                star.tags.forEach(tag => {
+                    if (!tagGroups[tag]) {
+                        tagGroups[tag] = [];
+                    }
+                    tagGroups[tag].push(star);
+                });
+            }
+        });
+
+        // Create connections between stars with same tags
+        let connectionsCreated = 0;
+
+        Object.values(tagGroups).forEach(starsWithTag => {
+            if (starsWithTag.length > 1) {
+                // Connect all pairs of stars with this tag
+                for (let i = 0; i < starsWithTag.length; i++) {
+                    for (let j = i + 1; j < starsWithTag.length; j++) {
+                        this.addConnection(starsWithTag[i], starsWithTag[j]);
+                        connectionsCreated++;
+                    }
+                }
+            }
+        });
+
+        if (connectionsCreated > 0) {
+            alert(`✨ Created ${connectionsCreated} connections between stars with matching tags!`);
+        } else {
+            alert('ℹ️ No connections created. Make sure stars have tags assigned and at least two stars share a tag.');
         }
     }
 
