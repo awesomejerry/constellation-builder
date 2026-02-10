@@ -33,6 +33,10 @@ class ConstellationBuilder {
         this.minZoom = 0.25;
         this.maxZoom = 4;
 
+        // Theme
+        this.isDarkMode = true;
+        this.loadTheme();
+
         this.init();
     }
 
@@ -173,6 +177,7 @@ class ConstellationBuilder {
         });
 
         // Action buttons
+        document.getElementById('themeToggleBtn').addEventListener('click', () => this.toggleTheme());
         document.getElementById('resetViewBtn').addEventListener('click', () => this.resetView());
         document.getElementById('clearBtn').addEventListener('click', () => this.clearAll());
         document.getElementById('helpBtn').addEventListener('click', () => this.showHelp());
@@ -751,7 +756,8 @@ class ConstellationBuilder {
 
     draw() {
         // Clear canvas
-        this.ctx.fillStyle = '#0a0a1a';
+        const bgColor = this.isDarkMode ? '#0a0a1a' : '#f5f5f5';
+        this.ctx.fillStyle = bgColor;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Apply zoom and pan
@@ -1030,6 +1036,31 @@ class ConstellationBuilder {
 
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         this.ctx.fillText(zoomText, x, y);
+    }
+
+    // Theme management
+    loadTheme() {
+        const saved = localStorage.getItem('constellationBuilderTheme');
+        this.isDarkMode = saved === null ? true : saved === 'dark';
+        this.applyTheme();
+    }
+
+    saveTheme() {
+        localStorage.setItem('constellationBuilderTheme', this.isDarkMode ? 'dark' : 'light');
+    }
+
+    toggleTheme() {
+        this.isDarkMode = !this.isDarkMode;
+        this.saveTheme();
+        this.applyTheme();
+    }
+
+    applyTheme() {
+        if (this.isDarkMode) {
+            document.body.style.background = '#050510';
+        } else {
+            document.body.style.background = '#f5f5f5';
+        }
     }
 
     hexToRgba(hex, alpha) {
