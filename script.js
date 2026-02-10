@@ -23,6 +23,16 @@ class ConstellationBuilder {
         // Particles for effects
         this.particles = [];
 
+        // Zoom & Pan
+        this.zoom = 1;
+        this.panX = 0;
+        this.panY = 0;
+        this.isPanning = false;
+        this.lastPanX = 0;
+        this.lastPanY = 0;
+        this.minZoom = 0.25;
+        this.maxZoom = 4;
+
         this.init();
     }
 
@@ -150,6 +160,7 @@ class ConstellationBuilder {
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
         this.canvas.addEventListener('mouseleave', (e) => this.handleMouseUp(e));
+        this.canvas.addEventListener('wheel', (e) => this.handleWheel(e), { passive: false });
 
         // Tool buttons
         document.querySelectorAll('.tool-btn').forEach(btn => {
@@ -162,6 +173,7 @@ class ConstellationBuilder {
         });
 
         // Action buttons
+        document.getElementById('resetViewBtn').addEventListener('click', () => this.resetView());
         document.getElementById('clearBtn').addEventListener('click', () => this.clearAll());
         document.getElementById('helpBtn').addEventListener('click', () => this.showHelp());
         document.getElementById('exportBtn').addEventListener('click', () => this.showExport());
@@ -237,6 +249,14 @@ class ConstellationBuilder {
     handleMouseDown(e) {
         const pos = this.getMousePos(e);
 
+        // Check for middle mouse or space+click for panning
+        if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+            this.isPanning = true;
+            this.lastPanX = e.clientX;
+            this.lastPanY = e.clientY;
+            return;
+        }
+
         if (this.mode === 'connect') {
             const clickedStar = this.findStarAt(pos.x, pos.y);
             if (clickedStar) {
@@ -253,6 +273,17 @@ class ConstellationBuilder {
     }
 
     handleMouseMove(e) {
+        // Handle panning
+        if (this.isPanning) {
+            const dx = e.clientX - this.lastPanX;
+            const dy = e.clientY - this.lastPanY;
+            this.panX += dx;
+            this.panY += dy;
+            this.lastPanX = e.clientX;
+            this.lastPanY = e.clientY;
+            return;
+        }
+
         if (!this.isDragging) return;
 
         const pos = this.getMousePos(e);
@@ -264,6 +295,12 @@ class ConstellationBuilder {
     }
 
     handleMouseUp(e) {
+        // Stop panning
+        if (this.isPanning) {
+            this.isPanning = false;
+            return;
+        }
+
         if (this.mode === 'connect' && this.connectionStart) {
             const pos = this.getMousePos(e);
             const clickedStar = this.findStarAt(pos.x, pos.y);
@@ -313,12 +350,44 @@ class ConstellationBuilder {
         }
     }
 
+    // Zoom & Pan methods
+    handleWheel(e) {
+        e.preventDefault();
+
+        // Zoom in/out
+        const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+        const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom * zoomFactor));
+
+        // Zoom toward mouse position
+        const rect = this.canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // Calculate world coordinates before zoom
+        const worldX = (mouseX - this.panX) / this.zoom;
+        const worldY = (mouseY - this.panY) / this.zoom;
+
+        // Update zoom
+        this.zoom = newZoom;
+
+        // Adjust pan to keep mouse at same world position
+        this.panX = mouseX - worldX * this.zoom;
+        this.panY = mouseY - worldY * this.zoom;
+    }
+
     getMousePos(e) {
         const rect = this.canvas.getBoundingClientRect();
+        // Convert screen coordinates to world coordinates
         return {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
+            x: (e.clientX - rect.left - this.panX) / this.zoom,
+            y: (e.clientY - rect.top - this.panY) / this.zoom
         };
+    }
+
+    resetView() {
+        this.zoom = 1;
+        this.panX = 0;
+        this.panY = 0;
     }
 
     findStarAt(x, y) {
@@ -682,6 +751,11 @@ class ConstellationBuilder {
         this.ctx.fillStyle = '#0a0a1a';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Apply zoom and pan
+        this.ctx.save();
+        this.ctx.translate(this.panX, this.panY);
+        this.ctx.scale(this.zoom, this.zoom);
+
         // Draw background stars
         this.drawBackgroundStars();
 
@@ -703,6 +777,11 @@ class ConstellationBuilder {
 
         // Draw particles
         this.updateAndDrawParticles();
+
+        this.ctx.restore();
+
+        // Draw zoom indicator
+        this.drawZoomIndicator();
     }
 
     drawBackgroundStars() {
@@ -789,6 +868,26 @@ class ConstellationBuilder {
                 this.ctx.fillText(star.title, star.x, star.y + 25);
             }
         });
+    }
+
+    drawZoomIndicator() {
+        const zoomText = `${Math.round(this.zoom * 100)}%`;
+        this.ctx.font = '14px Segoe UI, sans-serif';
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        this.ctx.textAlign = 'right';
+        this.ctx.textBaseline = 'bottom';
+
+        // Draw background pill
+        const padding = 8;
+        const textWidth = this.ctx.measureText(zoomText).width;
+        const x = this.canvas.width - padding - textWidth;
+        const y = this.canvas.height - padding;
+
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.fillRect(x - padding, y - padding - 14, textWidth + padding * 2, 20);
+
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        this.ctx.fillText(zoomText, x, y);
     }
 
     hexToRgba(hex, alpha) {
