@@ -412,6 +412,7 @@ class ConstellationBuilder {
             title: `Star ${this.nextStarId - 1}`,
             description: '',
             tags: [],
+            shape: 'circle', // Default shape
             createdAt: new Date().toISOString()
         };
         this.stars.push(star);
@@ -507,6 +508,7 @@ class ConstellationBuilder {
         document.getElementById('starTitle').value = star.title || '';
         document.getElementById('starDescription').value = star.description || '';
         document.getElementById('starTags').value = star.tags ? star.tags.join(', ') : '';
+        document.getElementById('starShape').value = star.shape || 'circle';
 
         this.showModal('starModal');
     }
@@ -522,6 +524,7 @@ class ConstellationBuilder {
             .split(',')
             .map(tag => tag.trim())
             .filter(tag => tag);
+        this.currentStar.shape = document.getElementById('starShape').value || 'circle';
 
         this.saveState('edit star');
         this.saveToStorage();
@@ -858,23 +861,17 @@ class ConstellationBuilder {
             gradient.addColorStop(0.5, this.hexToRgba(star.color, 0.3));
             gradient.addColorStop(1, 'transparent');
 
-            this.ctx.beginPath();
-            this.ctx.arc(star.x, star.y, 20, 0, Math.PI * 2);
-            this.ctx.fillStyle = gradient;
-            this.ctx.fill();
-
-            // Star core
-            this.ctx.beginPath();
-            this.ctx.arc(star.x, star.y, 8, 0, Math.PI * 2);
-            this.ctx.fillStyle = star.color;
-            this.ctx.fill();
-
-            // Star border
-            this.ctx.beginPath();
-            this.ctx.arc(star.x, star.y, 8, 0, Math.PI * 2);
-            this.ctx.strokeStyle = '#ffffff';
-            this.ctx.lineWidth = 2;
-            this.ctx.stroke();
+            // Draw shape based on star.shape
+            const shape = star.shape || 'circle';
+            if (shape === 'circle') {
+                this.drawCircle(star, gradient);
+            } else if (shape === 'diamond') {
+                this.drawDiamond(star, gradient);
+            } else if (shape === 'hexagon') {
+                this.drawHexagon(star, gradient);
+            } else if (shape === 'star') {
+                this.drawStarShape(star, gradient);
+            }
 
             // Title label
             if (star.title) {
@@ -885,6 +882,134 @@ class ConstellationBuilder {
                 this.ctx.fillText(star.title, star.x, star.y + 25);
             }
         });
+    }
+
+    drawCircle(star, gradient) {
+        // Glow
+        this.ctx.beginPath();
+        this.ctx.arc(star.x, star.y, 20, 0, Math.PI * 2);
+        this.ctx.fillStyle = gradient;
+        this.ctx.fill();
+
+        // Core
+        this.ctx.beginPath();
+        this.ctx.arc(star.x, star.y, 8, 0, Math.PI * 2);
+        this.ctx.fillStyle = star.color;
+        this.ctx.fill();
+
+        // Border
+        this.ctx.beginPath();
+        this.ctx.arc(star.x, star.y, 8, 0, Math.PI * 2);
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+    }
+
+    drawDiamond(star, gradient) {
+        const size = 18;
+
+        // Glow
+        this.ctx.beginPath();
+        this.ctx.moveTo(star.x, star.y - size);
+        this.ctx.lineTo(star.x + size, star.y);
+        this.ctx.lineTo(star.x, star.y + size);
+        this.ctx.lineTo(star.x - size, star.y);
+        this.ctx.closePath();
+        this.ctx.fillStyle = gradient;
+        this.ctx.fill();
+
+        // Core
+        const coreSize = 7;
+        this.ctx.beginPath();
+        this.ctx.moveTo(star.x, star.y - coreSize);
+        this.ctx.lineTo(star.x + coreSize, star.y);
+        this.ctx.lineTo(star.x, star.y + coreSize);
+        this.ctx.lineTo(star.x - coreSize, star.y);
+        this.ctx.closePath();
+        this.ctx.fillStyle = star.color;
+        this.ctx.fill();
+
+        // Border
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+    }
+
+    drawHexagon(star, gradient) {
+        const size = 16;
+        const sides = 6;
+
+        // Glow
+        this.ctx.beginPath();
+        for (let i = 0; i < sides; i++) {
+            const angle = (Math.PI * 2 * i / sides) - Math.PI / 2;
+            const x = star.x + size * Math.cos(angle);
+            const y = star.y + size * Math.sin(angle);
+            if (i === 0) {
+                this.ctx.moveTo(x, y);
+            } else {
+                this.ctx.lineTo(x, y);
+            }
+        }
+        this.ctx.closePath();
+        this.ctx.fillStyle = gradient;
+        this.ctx.fill();
+
+        // Core
+        const coreSize = 7;
+        this.ctx.beginPath();
+        for (let i = 0; i < sides; i++) {
+            const angle = (Math.PI * 2 * i / sides) - Math.PI / 2;
+            const x = star.x + coreSize * Math.cos(angle);
+            const y = star.y + coreSize * Math.sin(angle);
+            if (i === 0) {
+                this.ctx.moveTo(x, y);
+            } else {
+                this.ctx.lineTo(x, y);
+            }
+        }
+        this.ctx.closePath();
+        this.ctx.fillStyle = star.color;
+        this.ctx.fill();
+
+        // Border
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+    }
+
+    drawStarShape(star, gradient) {
+        const outerRadius = 16;
+        const innerRadius = 6;
+        const points = 5;
+
+        // Glow
+        this.ctx.beginPath();
+        for (let i = 0; i < points * 2; i++) {
+            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+            const angle = (Math.PI * i / points) - Math.PI / 2;
+            const x = star.x + radius * Math.cos(angle);
+            const y = star.y + radius * Math.sin(angle);
+            if (i === 0) {
+                this.ctx.moveTo(x, y);
+            } else {
+                this.ctx.lineTo(x, y);
+            }
+        }
+        this.ctx.closePath();
+        this.ctx.fillStyle = gradient;
+        this.ctx.fill();
+
+        // Core
+        this.ctx.beginPath();
+        this.ctx.arc(star.x, star.y, 6, 0, Math.PI * 2);
+        this.ctx.fillStyle = star.color;
+        this.ctx.fill();
+
+        // Border
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
     }
 
     drawZoomIndicator() {
