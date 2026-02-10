@@ -1,8 +1,6 @@
 // Constellation Builder - Main JavaScript
 class ConstellationBuilder {
     constructor() {
-        console.log('ConstellationBuilder constructor called');
-
         this.canvas = document.getElementById('constellationCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.stars = [];
@@ -14,10 +12,6 @@ class ConstellationBuilder {
         this.isDragging = false;
         this.nextStarId = 1;
         this.backgroundStars = [];
-
-        // Generate unique instance ID for debugging
-        this.instanceId = Date.now() + Math.random().toString(36).substr(2, 9);
-        console.log('ConstellationBuilder instance created, ID:', this.instanceId);
 
         this.init();
     }
@@ -75,34 +69,21 @@ class ConstellationBuilder {
             connections: this.connections,
             nextStarId: this.nextStarId
         };
-        console.log('Saving to storage:', data);
         try {
             localStorage.setItem('constellationBuilderData', JSON.stringify(data));
-            console.log('Successfully saved to localStorage');
         } catch (e) {
             console.error('Error saving to localStorage:', e);
         }
     }
 
     bindEvents() {
-        console.log('[Instance', this.instanceId, '] === bindEvents() called ===');
-
         // Canvas events
-        this.canvas.addEventListener('click', (e) => {
-            console.log('[Instance', this.instanceId, '] Canvas click event fired');
-            this.handleCanvasClick(e);
-        });
+        this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
         this.canvas.addEventListener('dblclick', (e) => this.handleCanvasDoubleClick(e));
         this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-        this.canvas.addEventListener('mouseup', (e) => {
-            console.log('[Instance', this.instanceId, '] Canvas mouseup event fired');
-            this.handleMouseUp(e);
-        });
-        this.canvas.addEventListener('mouseleave', (e) => {
-            console.log('[Instance', this.instanceId, '] Canvas mouseleave event fired');
-            this.handleMouseUp(e);
-        });
+        this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+        this.canvas.addEventListener('mouseleave', (e) => this.handleMouseUp(e));
 
         // Tool buttons
         document.querySelectorAll('.tool-btn').forEach(btn => {
@@ -130,24 +111,14 @@ class ConstellationBuilder {
             this.closeModal('starModal');
         });
 
-        // Save star button - attach directly with more defensive checks
+        // Save star button
         const saveStarBtn = document.getElementById('saveStar');
         if (saveStarBtn) {
-            console.log('[Instance', this.instanceId, '] Save star button found, attaching event listener');
             saveStarBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                e.stopImmediatePropagation();
-                console.log('=== SAVE BUTTON CLICKED [Instance', this.instanceId, '] ===');
-                console.log('this:', this);
-                console.log('this.instanceId:', this.instanceId);
-                console.log('this.stars:', this.stars);
-                console.log('this.stars.length:', this.stars.length);
-                console.log('this.currentStar:', this.currentStar);
                 this.saveStar();
             }, true); // Use capture phase
-        } else {
-            console.error('[Instance', this.instanceId, '] Save star button not found!');
         }
 
         document.getElementById('closeHelp').addEventListener('click', () => this.closeModal('helpModal'));
@@ -158,12 +129,10 @@ class ConstellationBuilder {
             btn.addEventListener('click', (e) => this.exportData(e));
         });
 
-        // Close modals on backdrop click - make more specific
+        // Close modals on backdrop click
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
-                console.log('[Instance', this.instanceId, '] Modal click event, e.target:', e.target, 'modal:', modal, 'match:', e.target === modal);
                 if (e.target === modal) {
-                    console.log('[Instance', this.instanceId, '] Closing modal (backdrop click)');
                     this.closeAllModals();
                 }
             });
@@ -175,12 +144,10 @@ class ConstellationBuilder {
 
     handleCanvasClick(e) {
         const pos = this.getMousePos(e);
-        console.log('[Instance', this.instanceId, '] Canvas click at position:', pos, 'mode:', this.mode);
 
         if (this.mode === 'add') {
             const clickedStar = this.findStarAt(pos.x, pos.y);
             if (!clickedStar) {
-                console.log('[Instance', this.instanceId, '] Adding star at', pos);
                 this.addStar(pos.x, pos.y);
             }
         } else if (this.mode === 'delete') {
@@ -229,8 +196,6 @@ class ConstellationBuilder {
     }
 
     handleMouseUp(e) {
-        console.log('[Instance', this.instanceId, '] handleMouseUp called, mode:', this.mode, 'currentStar before:', this.currentStar);
-
         if (this.mode === 'connect' && this.connectionStart) {
             const pos = this.getMousePos(e);
             const clickedStar = this.findStarAt(pos.x, pos.y);
@@ -252,8 +217,6 @@ class ConstellationBuilder {
         if (this.mode === 'move') {
             this.currentStar = null;
         }
-
-        console.log('[Instance', this.instanceId, '] handleMouseUp done, currentStar after:', this.currentStar);
     }
 
     handleKeyboard(e) {
@@ -284,8 +247,6 @@ class ConstellationBuilder {
     }
 
     addStar(x, y) {
-        console.log('[Instance', this.instanceId, '] addStar called');
-
         const star = {
             id: this.nextStarId++,
             x,
@@ -297,12 +258,9 @@ class ConstellationBuilder {
             createdAt: new Date().toISOString()
         };
         this.stars.push(star);
-        console.log('[Instance', this.instanceId, '] Created new star:', star);
-        console.log('[Instance', this.instanceId, '] Stars array now has', this.stars.length, 'stars');
 
         // Set currentStar immediately to prevent race conditions
         this.currentStar = star;
-        console.log('[Instance', this.instanceId, '] Set currentStar to:', this.currentStar);
 
         this.saveToStorage();
 
@@ -339,30 +297,17 @@ class ConstellationBuilder {
     }
 
     editStar(star) {
-        console.log('[Instance', this.instanceId, '] editStar called with star:', star);
-        console.log('[Instance', this.instanceId, '] this.stars has', this.stars.length, 'stars');
-        console.log('[Instance', this.instanceId, '] Star is in array:', this.stars.some(s => s.id === star.id));
-
         this.currentStar = star;
-        console.log('[Instance', this.instanceId, '] Set currentStar in editStar:', this.currentStar);
 
         document.getElementById('starTitle').value = star.title || '';
         document.getElementById('starDescription').value = star.description || '';
         document.getElementById('starTags').value = star.tags ? star.tags.join(', ') : '';
 
         this.showModal('starModal');
-        console.log('[Instance', this.instanceId, '] Modal opened, currentStar is still:', this.currentStar);
     }
 
     saveStar() {
-        console.log('[Instance', this.instanceId, '] === saveStar() called ===');
-        console.log('[Instance', this.instanceId, '] this:', this);
-        console.log('[Instance', this.instanceId, '] this.instanceId:', this.instanceId);
-        console.log('[Instance', this.instanceId, '] this.stars:', this.stars);
-        console.log('[Instance', this.instanceId, '] this.currentStar:', this.currentStar);
-
         if (!this.currentStar) {
-            console.error('[Instance', this.instanceId, '] No star to save - currentStar is null');
             return;
         }
 
@@ -373,7 +318,6 @@ class ConstellationBuilder {
             .map(tag => tag.trim())
             .filter(tag => tag);
 
-        console.log('[Instance', this.instanceId, '] Saving star:', this.currentStar);
         this.saveToStorage();
         this.closeModal('starModal');
     }
@@ -451,8 +395,6 @@ class ConstellationBuilder {
     }
 
     showModal(modalId) {
-        console.log('[Instance', this.instanceId, '] === showModal() called with modalId:', modalId, '===');
-        console.log('[Instance', this.instanceId, '] this.currentStar:', this.currentStar);
         document.getElementById(modalId).classList.remove('hidden');
         setTimeout(() => {
             document.getElementById(modalId).classList.add('visible');
@@ -595,16 +537,7 @@ class ConstellationBuilder {
     }
 }
 
-// Prevent multiple instances
-let appInstance = null;
-
 // Initialize the app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    if (appInstance) {
-        console.warn('ConstellationBuilder already initialized, skipping duplicate');
-        return;
-    }
-    console.log('Initializing ConstellationBuilder...');
-    appInstance = new ConstellationBuilder();
-    console.log('ConstellationBuilder initialized:', appInstance);
+    new ConstellationBuilder();
 });
