@@ -802,9 +802,26 @@ class ConstellationBuilder {
             const star2 = this.stars.find(s => s.id === conn.to);
 
             if (star1 && star2) {
+                // Calculate distance for curve intensity
+                const dx = star2.x - star1.x;
+                const dy = star2.y - star1.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Create control point for curve
+                // Offset perpendicular to the line
+                const midX = (star1.x + star2.x) / 2;
+                const midY = (star1.y + star2.y) / 2;
+                const curveIntensity = Math.min(distance * 0.15, 50);
+
+                // Use a consistent curve direction based on star IDs
+                const curveDirection = (star1.id % 2 === 0) ? 1 : -1;
+                const controlX = midX + (-dy / distance) * curveIntensity * curveDirection;
+                const controlY = midY + (dx / distance) * curveIntensity * curveDirection;
+
+                // Draw curved connection
                 this.ctx.beginPath();
                 this.ctx.moveTo(star1.x, star1.y);
-                this.ctx.lineTo(star2.x, star2.y);
+                this.ctx.quadraticCurveTo(controlX, controlY, star2.x, star2.y);
 
                 // Gradient stroke
                 const gradient = this.ctx.createLinearGradient(star1.x, star1.y, star2.x, star2.y);
