@@ -12,6 +12,16 @@ class ConstellationBuilder {
         this.isDragging = false;
         this.nextStarId = 1;
         this.backgroundStars = [];
+        this.selectedStars = [];
+        this.highlightedStars = [];
+
+        // Undo/Redo
+        this.undoStack = [];
+        this.redoStack = [];
+        this.maxUndoSize = 50;
+
+        // Particles for effects
+        this.particles = [];
 
         this.init();
     }
@@ -76,6 +86,62 @@ class ConstellationBuilder {
         }
     }
 
+    // Undo/Redo system
+    saveState(action) {
+        const state = {
+            stars: JSON.parse(JSON.stringify(this.stars)),
+            connections: JSON.parse(JSON.stringify(this.connections)),
+            nextStarId: this.nextStarId,
+            action: action
+        };
+
+        this.undoStack.push(state);
+        if (this.undoStack.length > this.maxUndoSize) {
+            this.undoStack.shift();
+        }
+
+        // Clear redo stack when new action is performed
+        this.redoStack = [];
+    }
+
+    undo() {
+        if (this.undoStack.length === 0) return;
+
+        const currentState = {
+            stars: JSON.parse(JSON.stringify(this.stars)),
+            connections: JSON.parse(JSON.stringify(this.connections)),
+            nextStarId: this.nextStarId
+        };
+
+        this.redoStack.push(currentState);
+
+        const previousState = this.undoStack.pop();
+        this.stars = previousState.stars;
+        this.connections = previousState.connections;
+        this.nextStarId = previousState.nextStarId;
+
+        this.saveToStorage();
+    }
+
+    redo() {
+        if (this.redoStack.length === 0) return;
+
+        const currentState = {
+            stars: JSON.parse(JSON.stringify(this.stars)),
+            connections: JSON.parse(JSON.stringify(this.connections)),
+            nextStarId: this.nextStarId
+        };
+
+        this.undoStack.push(currentState);
+
+        const nextState = this.redoStack.pop();
+        this.stars = nextState.stars;
+        this.connections = nextState.connections;
+        this.nextStarId = nextState.nextStarId;
+
+        this.saveToStorage();
+    }
+
     bindEvents() {
         // Canvas events
         this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
@@ -100,6 +166,7 @@ class ConstellationBuilder {
         document.getElementById('helpBtn').addEventListener('click', () => this.showHelp());
         document.getElementById('exportBtn').addEventListener('click', () => this.showExport());
         document.getElementById('connectByTagBtn').addEventListener('click', () => this.connectByTag());
+        document.getElementById('searchBtn').addEventListener('click', () => this.showSearch());
 
         // Modal events
         document.querySelectorAll('.close-btn').forEach(btn => {
@@ -221,8 +288,28 @@ class ConstellationBuilder {
     }
 
     handleKeyboard(e) {
+        // Don't trigger if typing in an input field
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+
         if (e.key === 'Escape') {
             this.closeAllModals();
+        } else if (e.ctrlKey && e.key === 'z') {
+            e.preventDefault();
+            this.undo();
+        } else if (e.ctrlKey && e.key === 'y') {
+            e.preventDefault();
+            this.redo();
+        } else if (e.key === ' ') {
+            e.preventDefault();
+            // Space to add random star (fun!)
+            const x = 50 + Math.random() * (this.canvas.width - 100);
+            const y = 50 + Math.random() * (this.canvas.height - 100);
+            this.addStar(x, y);
+        } else if (e.ctrlKey && e.key === 'f') {
+            e.preventDefault();
+            this.showSearch();
         }
     }
 
@@ -263,7 +350,9 @@ class ConstellationBuilder {
         // Set currentStar immediately to prevent race conditions
         this.currentStar = star;
 
+        this.saveState('add star');
         this.saveToStorage();
+        this.createParticles(x, y, this.selectedColor);
 
         // Open editor for new star
         this.editStar(star);
@@ -276,6 +365,8 @@ class ConstellationBuilder {
         );
         // Remove star
         this.stars = this.stars.filter(s => s.id !== star.id);
+
+        this.saveState('delete star');
         this.saveToStorage();
     }
 
@@ -293,7 +384,14 @@ class ConstellationBuilder {
                 color: this.selectedColor,
                 createdAt: new Date().toISOString()
             });
+
+            this.saveState('add connection');
             this.saveToStorage();
+
+            // Create particles at midpoint
+            const midX = (star1.x + star2.x) / 2;
+            const midY = (star1.y + star2.y) / 2;
+            this.createParticles(midX, midY, this.selectedColor);
         }
     }
 
@@ -356,6 +454,7 @@ class ConstellationBuilder {
             .map(tag => tag.trim())
             .filter(tag => tag);
 
+        this.saveState('edit star');
         this.saveToStorage();
         this.closeModal('starModal');
     }
@@ -385,6 +484,7 @@ class ConstellationBuilder {
 
     clearAll() {
         if (confirm('Are you sure you want to delete all stars and connections?')) {
+            this.saveState('clear all');
             this.stars = [];
             this.connections = [];
             this.nextStarId = 1;
@@ -394,6 +494,60 @@ class ConstellationBuilder {
 
     showHelp() {
         this.showModal('helpModal');
+    }
+
+    showSearch() {
+        this.showModal('searchModal');
+
+        // Clear previous results
+        this.highlightedStars = [];
+        document.getElementById('searchResults').innerHTML = '';
+        document.getElementById('searchInput').value = '';
+        document.getElementById('searchInput').focus();
+
+        // Add search button handler
+        const searchBtn = document.getElementById('searchBtnAction');
+        searchBtn.onclick = () => this.performSearch();
+
+        // Allow Enter key to search
+        const searchInput = document.getElementById('searchInput');
+        searchInput.onkeyup = (e) => {
+            if (e.key === 'Enter') {
+                this.performSearch();
+            }
+        };
+    }
+
+    performSearch() {
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        if (!query) return;
+
+        this.highlightedStars = [];
+        const resultsContainer = document.getElementById('searchResults');
+
+        // Search in titles and tags
+        const matchingStars = this.stars.filter(star => {
+            const titleMatch = star.title.toLowerCase().includes(query);
+            const tagMatch = star.tags && star.tags.some(tag => tag.toLowerCase().includes(query));
+            return titleMatch || tagMatch;
+        });
+
+        this.highlightedStars = matchingStars;
+
+        // Display results
+        if (matchingStars.length === 0) {
+            resultsContainer.innerHTML = '<p style="color: #888;">No matching stars found.</p>';
+        } else {
+            resultsContainer.innerHTML = `
+                <p style="color: #ffd700; margin-bottom: 10px;">Found ${matchingStars.length} matching star(s)</p>
+                ${matchingStars.map(star => `
+                    <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
+                        <strong style="color: #fff;">${star.title}</strong>
+                        ${star.tags && star.tags.length > 0 ? `<br><small style="color: #888;">Tags: ${star.tags.join(', ')}</small>` : ''}
+                    </div>
+                `).join('')}
+            `;
+        }
     }
 
     showExport() {
@@ -442,6 +596,12 @@ class ConstellationBuilder {
     closeModal(modalId) {
         const modal = document.getElementById(modalId);
         modal.classList.remove('visible');
+
+        // Clear highlights when search modal closes
+        if (modalId === 'searchModal') {
+            this.highlightedStars = [];
+        }
+
         setTimeout(() => {
             modal.classList.add('hidden');
         }, 300);
@@ -461,6 +621,62 @@ class ConstellationBuilder {
         requestAnimationFrame(() => this.animate());
     }
 
+    // Particle effects
+    createParticles(x, y, color) {
+        const particleCount = 15;
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (Math.PI * 2 * i) / particleCount;
+            const speed = 2 + Math.random() * 3;
+            this.particles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 1.0,
+                color: color,
+                size: 2 + Math.random() * 3
+            });
+        }
+    }
+
+    updateAndDrawParticles() {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+
+            // Update position
+            p.x += p.vx;
+            p.y += p.vy;
+
+            // Decay
+            p.life -= 0.02;
+            p.size *= 0.98;
+
+            // Remove dead particles
+            if (p.life <= 0 || p.size < 0.5) {
+                this.particles.splice(i, 1);
+                continue;
+            }
+
+            // Draw particle
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = this.hexToRgba(p.color, p.life);
+            this.ctx.fill();
+        }
+    }
+
+    drawStarHighlight(star) {
+        // Pulsing highlight ring
+        const time = Date.now() / 1000;
+        const pulse = Math.sin(time * 3) * 0.2 + 0.8;
+
+        this.ctx.beginPath();
+        this.ctx.arc(star.x, star.y, 25 * pulse, 0, Math.PI * 2);
+        this.ctx.strokeStyle = this.hexToRgba(star.color, 0.6);
+        this.ctx.lineWidth = 3;
+        this.ctx.stroke();
+    }
+
     draw() {
         // Clear canvas
         this.ctx.fillStyle = '#0a0a1a';
@@ -477,8 +693,16 @@ class ConstellationBuilder {
             this.drawTempConnection();
         }
 
+        // Draw highlighted stars
+        this.highlightedStars.forEach(star => {
+            this.drawStarHighlight(star);
+        });
+
         // Draw stars
         this.drawStars();
+
+        // Draw particles
+        this.updateAndDrawParticles();
     }
 
     drawBackgroundStars() {

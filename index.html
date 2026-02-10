@@ -15,6 +15,7 @@
                 <h1>Constellation Builder</h1>
             </div>
             <div class="actions">
+                <button id="searchBtn" class="btn secondary">🔍 Search</button>
                 <button id="connectByTagBtn" class="btn secondary">🏷️ Connect by Tag</button>
                 <button id="exportBtn" class="btn secondary">📥 Export</button>
                 <button id="clearBtn" class="btn secondary">🗑️ Clear All</button>
@@ -93,6 +94,25 @@
             </div>
         </div>
 
+        <!-- Search Modal -->
+        <div id="searchModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🔍 Search Constellation</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <input type="text" id="searchInput" placeholder="Search by title or tag..." autofocus>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn primary" id="searchBtnAction" style="width: 100%;">Search</button>
+                    </div>
+                    <div id="searchResults" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Help Modal -->
         <div id="helpModal" class="modal hidden">
             <div class="modal-content">
@@ -120,6 +140,16 @@
                     <div class="help-section">
                         <h3>📥 Exporting</h3>
                         <p>Click "Export" to save your constellation as a PNG image or JSON backup. Your work is also automatically saved in your browser.</p>
+                    </div>
+                    <div class="help-section">
+                        <h3>⌨️ Keyboard Shortcuts</h3>
+                        <p>
+                            <strong>Space</strong> - Add random star (fun!)<br>
+                            <strong>Ctrl+Z</strong> - Undo<br>
+                            <strong>Ctrl+Y</strong> - Redo<br>
+                            <strong>Ctrl+F</strong> - Search<br>
+                            <strong>Escape</strong> - Close modals
+                        </p>
                     </div>
                 </div>
                 <div class="modal-footer">
