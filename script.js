@@ -85,13 +85,24 @@ class ConstellationBuilder {
     }
 
     bindEvents() {
+        console.log('[Instance', this.instanceId, '] === bindEvents() called ===');
+
         // Canvas events
-        this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+        this.canvas.addEventListener('click', (e) => {
+            console.log('[Instance', this.instanceId, '] Canvas click event fired');
+            this.handleCanvasClick(e);
+        });
         this.canvas.addEventListener('dblclick', (e) => this.handleCanvasDoubleClick(e));
         this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-        this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
-        this.canvas.addEventListener('mouseleave', (e) => this.handleMouseUp(e));
+        this.canvas.addEventListener('mouseup', (e) => {
+            console.log('[Instance', this.instanceId, '] Canvas mouseup event fired');
+            this.handleMouseUp(e);
+        });
+        this.canvas.addEventListener('mouseleave', (e) => {
+            console.log('[Instance', this.instanceId, '] Canvas mouseleave event fired');
+            this.handleMouseUp(e);
+        });
 
         // Tool buttons
         document.querySelectorAll('.tool-btn').forEach(btn => {
@@ -150,7 +161,9 @@ class ConstellationBuilder {
         // Close modals on backdrop click - make more specific
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
+                console.log('[Instance', this.instanceId, '] Modal click event, e.target:', e.target, 'modal:', modal, 'match:', e.target === modal);
                 if (e.target === modal) {
+                    console.log('[Instance', this.instanceId, '] Closing modal (backdrop click)');
                     this.closeAllModals();
                 }
             });
