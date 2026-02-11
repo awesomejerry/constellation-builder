@@ -3,6 +3,8 @@ class ConstellationBuilder {
     constructor() {
         this.canvas = document.getElementById('constellationCanvas');
         this.ctx = this.canvas.getContext('2d');
+        this.minimapCanvas = document.getElementById('minimap');
+        this.minimapCtx = this.minimapCanvas ? this.minimapCanvas.getContext('2d') : null;
         this.stars = [];
         this.connections = [];
         this.mode = 'add';
@@ -783,6 +785,70 @@ class ConstellationBuilder {
         this.showModal('statsModal');
     }
 
+    updateMinimap() {
+        if (!this.minimapCtx) return;
+
+        const scale = 0.1; // Minimap is 10% of main canvas
+        const minimapWidth = this.minimapCanvas.width;
+        const minimapHeight = this.minimapCanvas.height;
+
+        // Clear minimap
+        this.minimapCtx.fillStyle = this.isDarkMode ? '#0a0a1a' : '#f5f5f5';
+        this.minimapCtx.fillRect(0, 0, minimapWidth, minimapHeight);
+
+        // Calculate viewport rectangle
+        const viewportX = (-this.panX) / this.zoom;
+        const viewportY = (-this.panY) / this.zoom;
+        const viewportWidth = this.canvas.width / this.zoom;
+        const viewportHeight = this.canvas.height / this.zoom;
+
+        // Apply scale
+        this.minimapCtx.save();
+        this.minimapCtx.scale(scale, scale);
+
+        // Draw stars on minimap
+        this.stars.forEach(star => {
+            // Star core
+            this.minimapCtx.beginPath();
+            this.minimapCtx.arc(star.x, star.y, 3, 0, Math.PI * 2);
+            this.minimapCtx.fillStyle = star.color;
+            this.minimapCtx.fill();
+
+            // Title (simplified)
+            if (star.title) {
+                this.minimapCtx.fillStyle = '#ffffff';
+                this.minimapCtx.font = '8px sans-serif';
+                this.minimapCtx.textAlign = 'center';
+                this.minimapCtx.fillText(star.title.substring(0, 8), star.x, star.y - 6);
+            }
+        });
+
+        // Draw connections on minimap
+        this.connections.forEach(conn => {
+            const star1 = this.stars.find(s => s.id === conn.from);
+            const star2 = this.stars.find(s => s.id === conn.to);
+            if (star1 && star2) {
+                this.minimapCtx.beginPath();
+                this.minimapCtx.moveTo(star1.x, star1.y);
+                this.minimapCtx.lineTo(star2.x, star2.y);
+                this.minimapCtx.strokeStyle = this.hexToRgba(conn.color, 0.5);
+                this.minimapCtx.lineWidth = 1;
+                this.minimapCtx.stroke();
+            }
+        });
+
+        this.minimapCtx.restore();
+
+        // Draw viewport rectangle
+        this.minimapCtx.save();
+        this.minimapCtx.scale(scale, scale);
+        this.minimapCtx.strokeStyle = '#ffd700';
+        this.minimapCtx.lineWidth = 2;
+        this.minimapCtx.setLineDash([5, 5]);
+        this.minimapCtx.strokeRect(viewportX, viewportY, viewportWidth, viewportHeight);
+        this.minimapCtx.restore();
+    }
+
     showModal(modalId) {
         document.getElementById(modalId).classList.remove('hidden');
         setTimeout(() => {
@@ -911,6 +977,11 @@ class ConstellationBuilder {
 
         // Draw zoom indicator
         this.drawZoomIndicator();
+
+        // Update minimap
+        if (this.minimapCtx) {
+            this.updateMinimap();
+        }
     }
 
     drawBackgroundStars() {
