@@ -22,6 +22,8 @@
                 </div>
             </div>
             <div class="actions mobile-actions">
+                <button id="statsBtn" class="btn secondary">📊 Stats</button>
+                <button id="importBtn" class="btn secondary">📤 Import</button>
                 <button id="themeToggleBtn" class="btn secondary">🌗 Theme</button>
                 <button id="resetViewBtn" class="btn secondary">📐 Reset</button>
                 <button id="searchBtn" class="btn secondary">🔍</button>
@@ -207,6 +209,83 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn secondary" id="cancelExport">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Import Modal -->
+        <div id="importModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📤 Import Constellation</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="importFile">Select JSON file</label>
+                        <input type="file" id="importFile" accept=".json">
+                    </div>
+                    <div class="form-group">
+                        <label>Import Options</label>
+                        <select id="importMode" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);">
+                            <option value="append">Append to current (merge)</option>
+                            <option value="replace">Replace all (new constellation)</option>
+                        </select>
+                    </div>
+                    <p style="color: #ffd700; font-size: 13px;">💡 Tip: Export your work first if you want to keep both versions!</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" id="cancelImport">Cancel</button>
+                    <button class="btn primary" id="confirmImport">Import</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Modal -->
+        <div id="statsModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📊 Constellation Statistics</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Stars</div>
+                            <div class="stat-value" id="statTotalStars">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Connections</div>
+                            <div class="stat-value" id="statTotalConnections">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Avg Connections/Star</div>
+                            <div class="stat-value" id="statAvgConnections">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Most Connected</div>
+                            <div class="stat-value" id="statMostConnected">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Tags</div>
+                            <div class="stat-value" id="statTotalTags">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Most Used Tag</div>
+                            <div class="stat-value" id="statMostUsedTag">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Oldest Star</div>
+                            <div class="stat-value" id="statOldestStar">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Newest Star</div>
+                            <div class="stat-value" id="statNewestStar">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn primary" id="closeStats">Close</button>
                 </div>
             </div>
         </div>
