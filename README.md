@@ -2,6 +2,8 @@
 
 A beautiful, interactive web app for connecting your ideas into glowing constellations.
 
+**🚀 Live Demo**: https://www.awesomejerry.space/constellation-builder
+
 ## ✨ Features
 
 - **🌟 Add Stars** - Click anywhere to create new ideas
