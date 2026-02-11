@@ -73,6 +73,37 @@ h1 {
     gap: 10px;
 }
 
+.mobile-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.zoom-controls {
+    display: none; /* Hidden on desktop */
+    align-items: center;
+    gap: 8px;
+    background: var(--panel-bg);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.zoom-btn {
+    padding: 4px 12px !important;
+    min-width: 32px !important;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#zoomLevel {
+    min-width: 50px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+}
+
 /* Buttons */
 .btn {
     padding: 10px 20px;
@@ -123,6 +154,7 @@ main {
 #constellationCanvas {
     display: block;
     cursor: crosshair;
+    touch-action: none; /* Prevent default touch behaviors */
 }
 
 /* Toolbar */
@@ -403,9 +435,19 @@ main {
         padding: 15px;
     }
 
+    .logo h1 {
+        font-size: 18px;
+    }
+
     .actions {
         flex-wrap: wrap;
         justify-content: center;
+        gap: 8px;
+    }
+
+    .btn {
+        padding: 8px 12px;
+        font-size: 12px;
     }
 
     .toolbar {
@@ -419,9 +461,119 @@ main {
         justify-content: center;
     }
 
+    .tool-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .color-picker {
+        gap: 6px;
+    }
+
+    .color-btn {
+        width: 30px;
+        height: 30px;
+    }
+
     .modal-content {
         max-width: 95%;
         padding: 20px;
+        margin: 20px 10px;
+    }
+
+    .modal-body {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    header {
+        padding: 10px;
+    }
+
+    .logo h1 {
+        font-size: 16px;
+    }
+
+    .actions {
+        gap: 6px;
+    }
+
+    .btn {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .btn .text {
+        display: none;
+    }
+
+    .toolbar {
+        gap: 15px;
+        padding: 10px;
+    }
+
+    .tool-btn .text {
+        display: none;
+    }
+
+    .modal-content {
+        max-width: 100%;
+        margin: 10px 5px;
+        border-radius: 12px;
+    }
+}
+
+/* Touch-friendly adjustments */
+@media (pointer: coarse) {
+    .btn,
+    .tool-btn,
+    .color-btn,
+    .export-option,
+    .close-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .tool-btn.active {
+        box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .canvas-container {
+        position: relative;
+    }
+
+    /* Add visual hint for touch users */
+    .canvas-container::before {
+        content: 'Tap to add stars • Pinch to zoom • Drag two fingers to pan';
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-size: 12px;
+        pointer-events: none;
+        opacity: 0.8;
+        z-index: 50;
+        text-align: center;
+    }
+
+    /* Show zoom controls on mobile */
+    .zoom-controls {
+        display: flex;
+    }
+
+    /* Hide desktop actions on mobile */
+    .actions:not(.mobile-actions) .btn {
+        padding: 6px 10px;
+    }
+
+    .actions:not(.mobile-actions) .btn .text {
+        display: none;
     }
 }
 
