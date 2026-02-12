@@ -72,32 +72,31 @@
 
 ---
 
-## 🚧 In Progress / Known Issues
+## ✅ Recently Completed (Feb 2026)
 
-### Bug: Zoom Buttons Not Working
-**Status**: 🐛 Identified
+### ✅ Fix: Zoom Buttons
+**Status**: ✅ FIXED (2026-02-12)
 **Description**: Zoom buttons (➖/➕) exist in HTML but have no event handlers in JavaScript
-**Impact**: Mobile users can only use pinch-to-zoom, not the buttons
-**Priority**: Medium
-**Estimated Time**: 15 minutes
+**Impact**: Mobile users can now use buttons + pinch-to-zoom
+**Priority**: Medium (FIXED)
+**Commit**: `4ca626e`
+**Changes**:
+- Added event listeners for zoomInBtn and zoomOutBtn
+- Implemented zoomIn() method with center-based zooming (25% increments)
+- Implemented zoomOut() method with center-based zooming
+- Respects min/max zoom limits (0.25x to 4x)
+- Updates zoom level display in header
 
-**To Fix**:
-1. Add event listeners in `bindEvents()`:
-   ```javascript
-   document.getElementById('zoomInBtn').addEventListener('click', () => this.zoomIn());
-   document.getElementById('zoomOutBtn').addEventListener('click', () => this.zoomOut());
-   ```
-2. Implement `zoomIn()` and `zoomOut()` methods:
-   ```javascript
-   zoomIn() {
-       this.zoom = Math.min(this.maxZoom, this.zoom * 1.25);
-       this.draw();
-   }
-   zoomOut() {
-       this.zoom = Math.max(this.minZoom, this.zoom / 1.25);
-       this.draw();
-   }
-   ```
+### ✅ Feature: Drag Minimap Navigation
+**Status**: ✅ IMPLEMENTED (2026-02-12)
+**Description**: Click on minimap to navigate the canvas
+**Priority**: High
+**Commit**: `4ca626e`
+**Changes**:
+- Click on minimap to jump to that area
+- Centers viewport on clicked location
+- Works on desktop and mobile
+- High-impact feature for large constellations
 
 ---
 
