@@ -189,6 +189,21 @@ class ConstellationBuilder {
         document.getElementById('statsBtn').addEventListener('click', () => this.showStats());
         document.getElementById('importBtn').addEventListener('click', () => this.showImport());
 
+        // Zoom buttons
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        if (zoomInBtn) {
+            zoomInBtn.addEventListener('click', () => this.zoomIn());
+        }
+        if (zoomOutBtn) {
+            zoomOutBtn.addEventListener('click', () => this.zoomOut());
+        }
+
+        // Minimap click navigation
+        if (this.minimapCanvas) {
+            this.minimapCanvas.addEventListener('click', (e) => this.handleMinimapClick(e));
+        }
+
         // Modal events
         document.querySelectorAll('.close-btn').forEach(btn => {
             btn.addEventListener('click', () => this.closeAllModals());
@@ -400,6 +415,69 @@ class ConstellationBuilder {
         this.zoom = 1;
         this.panX = 0;
         this.panY = 0;
+    }
+
+    zoomIn() {
+        const zoomFactor = 1.25;
+        const newZoom = Math.min(this.maxZoom, this.zoom * zoomFactor);
+
+        if (newZoom === this.zoom) return; // Already at max
+
+        // Zoom toward center of canvas
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+
+        // Calculate world coordinates before zoom
+        const worldX = (centerX - this.panX) / this.zoom;
+        const worldY = (centerY - this.panY) / this.zoom;
+
+        // Update zoom
+        this.zoom = newZoom;
+
+        // Adjust pan to keep center at same world position
+        this.panX = centerX - worldX * this.zoom;
+        this.panY = centerY - worldY * this.zoom;
+    }
+
+    zoomOut() {
+        const zoomFactor = 1 / 1.25;
+        const newZoom = Math.max(this.minZoom, this.zoom * zoomFactor);
+
+        if (newZoom === this.zoom) return; // Already at min
+
+        // Zoom toward center of canvas
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+
+        // Calculate world coordinates before zoom
+        const worldX = (centerX - this.panX) / this.zoom;
+        const worldY = (centerY - this.panY) / this.zoom;
+
+        // Update zoom
+        this.zoom = newZoom;
+
+        // Adjust pan to keep center at same world position
+        this.panX = centerX - worldX * this.zoom;
+        this.panY = centerY - worldY * this.zoom;
+    }
+
+    handleMinimapClick(e) {
+        if (!this.minimapCanvas) return;
+
+        // Get click position relative to minimap
+        const rect = this.minimapCanvas.getBoundingClientRect();
+        const minimapX = e.clientX - rect.left;
+        const minimapY = e.clientY - rect.top;
+
+        // Convert minimap coordinates to world coordinates
+        // Minimap scale is 0.1, so divide by 0.1 (multiply by 10)
+        const worldX = minimapX / 0.1;
+        const worldY = minimapY / 0.1;
+
+        // Calculate pan to center viewport on clicked location
+        // We want worldX to be at center of viewport
+        this.panX = (this.canvas.width / 2) - (worldX * this.zoom);
+        this.panY = (this.canvas.height / 2) - (worldY * this.zoom);
     }
 
     findStarAt(x, y) {
@@ -1227,6 +1305,12 @@ class ConstellationBuilder {
 
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         this.ctx.fillText(zoomText, x, y);
+
+        // Update zoom level display in header
+        const zoomLevelEl = document.getElementById('zoomLevel');
+        if (zoomLevelEl) {
+            zoomLevelEl.textContent = zoomText;
+        }
     }
 
     // Theme management
