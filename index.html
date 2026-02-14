@@ -29,6 +29,7 @@
                 <button id="searchBtn" class="btn secondary">🔍</button>
                 <button id="connectByTagBtn" class="btn secondary">🔗🏷️</button>
                 <button id="filterTagsBtn" class="btn secondary">🏷️ Filter</button>
+                <button id="templatesBtn" class="btn secondary">📚 Templates</button>
                 <button id="exportBtn" class="btn secondary">📥</button>
                 <button id="clearBtn" class="btn secondary">🗑️</button>
                 <button id="helpBtn" class="btn secondary">❓</button>
@@ -65,6 +66,10 @@
                         <span class="icon">❌</span>
                         <span class="text">Delete</span>
                     </button>
+                    <button class="tool-btn" data-mode="select" title="Click to select multiple">
+                        <span class="icon">✅</span>
+                        <span class="text">Select</span>
+                    </button>
                 </div>
 
                 <div class="tool-group">
@@ -77,6 +82,29 @@
                         <button class="color-btn" data-color="#98fb98" style="background: #98fb98; box-shadow: 0 0 10px #98fb98;"></button>
                         <button class="color-btn" data-color="#dda0dd" style="background: #dda0dd; box-shadow: 0 0 10px #dda0dd;"></button>
                     </div>
+                </div>
+
+                <div class="tool-group">
+                    <span class="tool-label">Line Style:</span>
+                    <div class="line-style-picker">
+                        <button class="line-style-btn active" data-style="solid" title="Solid line">
+                            <span class="line-icon">━━</span>
+                            <span class="line-text">Solid</span>
+                        </button>
+                        <button class="line-style-btn" data-style="dashed" title="Dashed line">
+                            <span class="line-icon">┄┄</span>
+                            <span class="line-text">Dashed</span>
+                        </button>
+                        <button class="line-style-btn" data-style="dotted" title="Dotted line">
+                            <span class="line-icon">···</span>
+                            <span class="line-text">Dotted</span>
+                        </button>
+                    </div>
+
+                <div class="tool-group">
+                    <span class="tool-label">Batch Actions:</span>
+                    <button id="batchDeleteBtn" class="btn secondary" title="Delete selected stars" disabled>🗑️ Delete Selected</button>
+                    <button id="batchColorBtn" class="btn secondary" title="Change color of selected stars" disabled>🎨 Change Color</button>
                 </div>
             </div>
         </main>
@@ -94,8 +122,9 @@
                         <input type="text" id="starTitle" placeholder="e.g., Project Alpha">
                     </div>
                     <div class="form-group">
-                        <label for="starDescription">Description</label>
-                        <textarea id="starDescription" rows="3" placeholder="Describe your idea..."></textarea>
+                        <label for="starDescription">Description / Notes</label>
+                        <textarea id="starDescription" rows="4" placeholder="Describe your idea in detail... Use multi-line for detailed notes" style="resize: vertical; min-height: 80px;"></textarea>
+                        <div class="char-count" id="descriptionCharCount" style="color: var(--text-secondary); font-size: 12px; text-align: right; margin-top: 4px;">0 characters</div>
                     </div>
                     <div class="form-group">
                         <label for="starShape">Shape</label>
@@ -319,6 +348,43 @@
                 <div class="modal-footer">
                     <button class="btn secondary" id="showAllTags">Show All</button>
                     <button class="btn primary" id="closeTagFilter">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Templates Modal -->
+        <div id="templatesModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📚 Constellation Templates</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="template-options">
+                        <button class="template-option" data-template="mindmap">
+                            <span class="template-icon">🧠</span>
+                            <span class="template-label">Mind Map</span>
+                            <span class="template-desc">Central idea with radiating branches</span>
+                        </button>
+                        <button class="template-option" data-template="orgchart">
+                            <span class="template-icon">👥</span>
+                            <span class="template-label">Org Chart</span>
+                            <span class="template-desc">Hierarchical structure</span>
+                        </button>
+                        <button class="template-option" data-template="flowchart">
+                            <span class="template-icon">📊</span>
+                            <span class="template-label">Flowchart</span>
+                            <span class="template-desc">Process flow visualization</span>
+                        </button>
+                        <button class="template-option" data-template="project">
+                            <span class="template-icon">🎯</span>
+                            <span class="template-label">Project Map</span>
+                            <span class="template-desc">Goal-oriented layout</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" id="cancelTemplates">Cancel</button>
                 </div>
             </div>
         </div>

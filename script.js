@@ -17,8 +17,14 @@ class ConstellationBuilder {
         this.selectedStars = [];
         this.highlightedStars = [];
 
+        // Line styles
+        this.selectedLineStyle = 'solid'; // solid, dashed, dotted
+
         // Tag filtering
         this.visibleTags = null; // null means show all, otherwise Set of visible tags
+
+        // Selection box
+        this.selectionBox = null;
 
         // Undo/Redo
         this.undoStack = [];
@@ -181,6 +187,11 @@ class ConstellationBuilder {
             btn.addEventListener('click', (e) => this.setColor(e));
         });
 
+        // Line style buttons
+        document.querySelectorAll('.line-style-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.setLineStyle(e));
+        });
+
         // Action buttons
         document.getElementById('themeToggleBtn').addEventListener('click', () => this.toggleTheme());
         document.getElementById('resetViewBtn').addEventListener('click', () => this.resetView());
@@ -192,6 +203,10 @@ class ConstellationBuilder {
         document.getElementById('statsBtn').addEventListener('click', () => this.showStats());
         document.getElementById('importBtn').addEventListener('click', () => this.showImport());
         document.getElementById('filterTagsBtn').addEventListener('click', () => this.showTagFilter());
+
+        // Templates
+        document.getElementById('templatesBtn').addEventListener('click', () => this.showTemplates());
+        document.getElementById('cancelTemplates').addEventListener('click', () => this.closeModal('templatesModal'));
 
         // Tag filter modal events
         document.getElementById('showAllTags').addEventListener('click', () => this.showAllTags());
@@ -222,6 +237,16 @@ class ConstellationBuilder {
             e.stopPropagation();
             this.closeModal('starModal');
         });
+
+        // Description character count update
+        const descTextarea = document.getElementById('starDescription');
+        if (descTextarea) {
+            descTextarea.addEventListener('input', () => this.updateDescriptionCharCount());
+        }
+
+        // Batch action buttons
+        document.getElementById('batchDeleteBtn').addEventListener('click', () => this.batchDeleteSelected());
+        document.getElementById('batchColorBtn').addEventListener('click', () => this.batchChangeColor());
 
         // Save star button
         const saveStarBtn = document.getElementById('saveStar');
@@ -270,6 +295,25 @@ class ConstellationBuilder {
             if (clickedStar) {
                 this.deleteStar(clickedStar);
             }
+        } else if (this.mode === 'select') {
+            const clickedStar = this.findStarAt(pos.x, pos.y);
+            if (clickedStar) {
+                // Toggle selection
+                if (e.ctrlKey || e.metaKey) {
+                    // Multi-select (Ctrl+Click)
+                    if (this.selectedStars.includes(clickedStar)) {
+                        this.selectedStars = this.selectedStars.filter(s => s.id !== clickedStar.id);
+                    } else {
+                        this.selectedStars.push(clickedStar);
+                    }
+                } else {
+                    // Single selection
+                    if (!this.selectedStars.includes(clickedStar)) {
+                        this.selectedStars = [clickedStar];
+                    }
+                }
+                this.updateBatchButtons();
+            }
         }
     }
 
@@ -289,6 +333,18 @@ class ConstellationBuilder {
             this.isPanning = true;
             this.lastPanX = e.clientX;
             this.lastPanY = e.clientY;
+            return;
+        }
+
+        if (this.mode === 'select') {
+            // Selection box mode - start drag
+            this.selectionBox = {
+                startX: pos.x,
+                startY: pos.y,
+                endX: pos.x,
+                endY: pos.y
+            };
+            this.isDragging = true;
             return;
         }
 
@@ -323,6 +379,13 @@ class ConstellationBuilder {
 
         const pos = this.getMousePos(e);
 
+        if (this.mode === 'select') {
+            // Update selection box
+            this.selectionBox.endX = pos.x;
+            this.selectionBox.endY = pos.y;
+            return;
+        }
+
         if (this.mode === 'move' && this.currentStar) {
             this.currentStar.x = pos.x;
             this.currentStar.y = pos.y;
@@ -333,6 +396,30 @@ class ConstellationBuilder {
         // Stop panning
         if (this.isPanning) {
             this.isPanning = false;
+            return;
+        }
+
+        if (this.mode === 'select' && this.selectionBox) {
+            // Finalize selection box
+            const { startX, startY, endX, endY } = this.selectionBox;
+            const minX = Math.min(startX, endX);
+            const maxX = Math.max(startX, endX);
+            const minY = Math.min(startY, endY);
+            const maxY = Math.max(startY, endY);
+
+            // Select all stars within the box
+            const newlySelected = this.stars.filter(star =>
+                star.x >= minX && star.x <= maxX &&
+                star.y >= minY && star.y <= maxY
+            );
+
+            if (newlySelected.length > 0) {
+                this.selectedStars = newlySelected;
+                this.updateBatchButtons();
+            }
+
+            this.selectionBox = null;
+            this.isDragging = false;
             return;
         }
 
@@ -382,6 +469,27 @@ class ConstellationBuilder {
         } else if (e.ctrlKey && e.key === 'f') {
             e.preventDefault();
             this.showSearch();
+        } else if (e.key === '1') {
+            e.preventDefault();
+            this.setModeByKey('add');
+        } else if (e.key === '2') {
+            e.preventDefault();
+            this.setModeByKey('connect');
+        } else if (e.key === '3') {
+            e.preventDefault();
+            this.setModeByKey('move');
+        } else if (e.key === '4') {
+            e.preventDefault();
+            this.setModeByKey('delete');
+        }
+    }
+
+    setModeByKey(mode) {
+        // Find the tool button for this mode
+        const btn = document.querySelector(`[data-mode="${mode}"]`);
+        if (btn) {
+            // Trigger the existing setMode method with the button
+            this.setMode({ currentTarget: btn });
         }
     }
 
@@ -550,6 +658,7 @@ class ConstellationBuilder {
                 from: star1.id,
                 to: star2.id,
                 color: this.selectedColor,
+                style: this.selectedLineStyle,
                 createdAt: new Date().toISOString()
             });
 
@@ -608,7 +717,19 @@ class ConstellationBuilder {
         document.getElementById('starTags').value = star.tags ? star.tags.join(', ') : '';
         document.getElementById('starShape').value = star.shape || 'circle';
 
+        // Update character count
+        this.updateDescriptionCharCount();
+
         this.showModal('starModal');
+    }
+
+    updateDescriptionCharCount() {
+        const desc = document.getElementById('starDescription').value;
+        const count = desc.length;
+        const charCountEl = document.getElementById('descriptionCharCount');
+        if (charCountEl) {
+            charCountEl.textContent = `${count} character${count !== 1 ? 's' : ''}`;
+        }
     }
 
     saveStar() {
@@ -640,9 +761,16 @@ class ConstellationBuilder {
             add: 'crosshair',
             connect: 'alias',
             move: 'move',
-            delete: 'pointer'
+            delete: 'pointer',
+            select: 'cell'
         };
         this.canvas.style.cursor = cursors[this.mode] || 'crosshair';
+
+        // Clear selection when switching modes (except select mode)
+        if (this.mode !== 'select') {
+            this.selectedStars = [];
+            this.updateBatchButtons();
+        }
     }
 
     setColor(e) {
@@ -650,6 +778,13 @@ class ConstellationBuilder {
         document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         this.selectedColor = btn.dataset.color;
+    }
+
+    setLineStyle(e) {
+        const btn = e.currentTarget;
+        document.querySelectorAll('.line-style-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.selectedLineStyle = btn.dataset.style;
     }
 
     clearAll() {
@@ -1089,6 +1224,304 @@ class ConstellationBuilder {
         return star.tags.some(tag => this.visibleTags.has(tag));
     }
 
+    updateBatchButtons() {
+        const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+        const batchColorBtn = document.getElementById('batchColorBtn');
+
+        if (batchDeleteBtn) {
+            batchDeleteBtn.disabled = this.selectedStars.length === 0;
+        }
+        if (batchColorBtn) {
+            batchColorBtn.disabled = this.selectedStars.length === 0;
+        }
+    }
+
+    batchDeleteSelected() {
+        if (this.selectedStars.length === 0) return;
+
+        if (confirm(`Delete ${this.selectedStars.length} selected star${this.selectedStars.length > 1 ? 's' : ''}?`)) {
+            // Remove connections involving selected stars
+            this.connections = this.connections.filter(conn => {
+                const fromSelected = this.selectedStars.some(s => s.id === conn.from);
+                const toSelected = this.selectedStars.some(s => s.id === conn.to);
+                return !fromSelected || !toSelected; // Keep connection if neither end is selected
+            });
+
+            // Remove selected stars
+            this.stars = this.stars.filter(star => !this.selectedStars.some(s => s.id === star.id));
+
+            this.saveState('batch delete');
+            this.saveToStorage();
+            this.selectedStars = [];
+            this.updateBatchButtons();
+        }
+    }
+
+    batchChangeColor() {
+        if (this.selectedStars.length === 0) return;
+
+        // Simple color picker using prompt
+        const colors = ['#ffffff', '#ffd700', '#00bfff', '#ff6b6b', '#98fb98', '#dda0dd'];
+        const colorNames = ['White', 'Gold', 'Sky Blue', 'Coral', 'Pale Green', 'Plum Purple'];
+        
+        // Create a simple color picker modal-like interface
+        const colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        colorInput.value = this.selectedStars[0].color;
+
+        const colorLabel = document.createElement('label');
+        colorLabel.textContent = 'Choose color for selected stars: ';
+        colorLabel.appendChild(colorInput);
+
+        const confirmBtn = document.createElement('button');
+        confirmBtn.textContent = 'Apply';
+        confirmBtn.className = 'btn primary';
+        confirmBtn.style.marginLeft = '10px';
+
+        const container = document.createElement('div');
+        container.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid var(--border-color);
+            z-index: 2000;
+        `;
+        container.appendChild(colorLabel);
+        container.appendChild(confirmBtn);
+        document.body.appendChild(container);
+
+        confirmBtn.onclick = () => {
+            this.selectedStars.forEach(star => {
+                star.color = colorInput.value;
+            });
+
+            this.saveState('batch color change');
+            this.saveToStorage();
+            document.body.removeChild(container);
+        };
+    }
+
+    drawSelectionBox() {
+        if (!this.selectionBox || this.mode !== 'select') return;
+
+        const { startX, startY, endX, endY } = this.selectionBox;
+        const minX = Math.min(startX, endX);
+        const maxX = Math.max(startX, endX);
+        const minY = Math.min(startY, endY);
+        const maxY = Math.max(startY, endY);
+
+        this.ctx.save();
+        this.ctx.setLineDash([5, 5]);
+        this.ctx.strokeStyle = '#ffd700';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+        this.ctx.restore();
+    }
+
+    showTemplates() {
+        this.showModal('templatesModal');
+
+        // Add event listeners to template options
+        document.querySelectorAll('.template-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const template = e.currentTarget.dataset.template;
+                this.applyTemplate(template);
+            });
+        });
+    }
+
+    applyTemplate(templateType) {
+        // Clear current constellation if user confirms
+        if (this.stars.length > 0) {
+            if (!confirm('This will replace your current constellation. Continue?')) {
+                this.closeModal('templatesModal');
+                return;
+            }
+        }
+
+        // Reset constellation
+        this.stars = [];
+        this.connections = [];
+        this.nextStarId = 1;
+
+        const centerX = 400;
+        const centerY = 300;
+
+        if (templateType === 'mindmap') {
+            // Mind Map: Central idea with branches
+            const colors = ['#ffd700', '#00bfff', '#ff6b6b', '#98fb98'];
+            const branches = ['Project', 'Research', 'Development', 'Design', 'Marketing', 'Testing'];
+
+            // Central star
+            this.stars.push({
+                id: this.nextStarId++,
+                x: centerX,
+                y: centerY,
+                color: '#ffffff',
+                title: 'Main Goal',
+                description: 'Central objective',
+                tags: ['goal', 'main'],
+                shape: 'star',
+                createdAt: new Date().toISOString()
+            });
+
+            // Branch stars
+            branches.forEach((branch, index) => {
+                const angle = (index / branches.length) * Math.PI * 2 - Math.PI / 2;
+                const distance = 250;
+                const x = centerX + Math.cos(angle) * distance;
+                const y = centerY + Math.sin(angle) * distance;
+
+                this.stars.push({
+                    id: this.nextStarId++,
+                    x, y,
+                    color: colors[index % colors.length],
+                    title: branch,
+                    description: `Key aspect: ${branch.toLowerCase()}`,
+                    tags: [branch.toLowerCase()],
+                    shape: 'circle',
+                    createdAt: new Date().toISOString()
+                });
+
+                // Connect to center
+                this.connections.push({
+                    id: Date.now(),
+                    from: 1,
+                    to: this.stars[this.stars.length - 1].id,
+                    color: colors[index % colors.length],
+                    style: this.selectedLineStyle,
+                    createdAt: new Date().toISOString()
+                });
+            });
+
+        } else if (templateType === 'orgchart') {
+            // Org Chart: Hierarchical structure
+            const levels = ['CEO', 'VP', 'Manager', 'Team', 'Member'];
+            const startY = 100;
+            const levelHeight = 120;
+            let previousLevelStars = [];
+
+            levels.forEach((level, levelIndex) => {
+                const numStars = 1 + Math.floor(Math.random() * 3);
+                const startYThisLevel = startY + levelIndex * levelHeight;
+                const totalWidth = 800;
+
+                for (let i = 0; i < numStars; i++) {
+                    const x = totalWidth / (numStars + 1) * (i + 1);
+
+                    this.stars.push({
+                        id: this.nextStarId++,
+                        x,
+                        y: startYThisLevel,
+                        color: ['#ffd700', '#00bfff', '#ff6b6b', '#98fb98', '#dda0dd'][levelIndex % 5],
+                        title: `${level} ${i + 1}`,
+                        description: `${level} position`,
+                        tags: [level.toLowerCase()],
+                        shape: ['circle', 'diamond', 'hexagon'][levelIndex % 3],
+                        createdAt: new Date().toISOString()
+                    });
+
+                    // Connect to previous level
+                    if (levelIndex > 0 && previousLevelStars.length > 0) {
+                        const parentIndex = Math.floor(i * previousLevelStars.length / numStars);
+                        const parent = previousLevelStars[parentIndex] || previousLevelStars[previousLevelStars.length - 1];
+
+                        this.connections.push({
+                            id: Date.now(),
+                            from: parent.id,
+                            to: this.stars[this.stars.length - 1].id,
+                            color: '#ffffff',
+                            style: this.selectedLineStyle,
+                            createdAt: new Date().toISOString()
+                        });
+                    }
+                }
+
+                previousLevelStars = [...this.stars];
+            });
+
+        } else if (templateType === 'flowchart') {
+            // Flowchart: Process flow
+            const steps = ['Start', 'Decision', 'Process', 'Review', 'Approval', 'End'];
+            const startX = 100;
+            const gapX = 150;
+
+            steps.forEach((step, index) => {
+                this.stars.push({
+                    id: this.nextStarId++,
+                    x: startX + index * gapX,
+                    y: centerY,
+                    color: ['#ffd700', '#00bfff', '#ff6b6b', '#98fb98', '#dda0dd', '#ffffff'][index % 7],
+                    title: step,
+                    description: `Process step ${index + 1}`,
+                    tags: ['process', step.toLowerCase()],
+                    shape: index === 1 || index === 3 ? 'diamond' : 'circle',
+                    createdAt: new Date().toISOString()
+                });
+
+                // Connect to previous step
+                if (index > 0) {
+                    this.connections.push({
+                        id: Date.now(),
+                        from: this.stars[index].id,
+                        to: this.stars[index + 1].id,
+                        color: '#ffffff',
+                        style: this.selectedLineStyle,
+                        createdAt: new Date().toISOString()
+                    });
+                }
+            });
+
+        } else if (templateType === 'project') {
+            // Project Map: Goal-oriented
+            const categories = ['Goals', 'Milestones', 'Tasks', 'Resources', 'Risks'];
+            const positions = [
+                {x: 200, y: 200},
+                {x: 600, y: 200},
+                {x: 200, y: 500},
+                {x: 600, y: 500},
+                {x: 400, y: 350}
+            ];
+
+            categories.forEach((category, index) => {
+                const pos = positions[index];
+
+                this.stars.push({
+                    id: this.nextStarId++,
+                    x: pos.x,
+                    y: pos.y,
+                    color: ['#ffd700', '#00bfff', '#ff6b6b', '#98fb98', '#dda0dd'][index % 5],
+                    title: category,
+                    description: `Project ${category.toLowerCase()}`,
+                    tags: ['project', category.toLowerCase()],
+                    shape: ['circle', 'diamond', 'hexagon', 'star'][index % 4],
+                    createdAt: new Date().toISOString()
+                });
+
+                // Connect to center
+                if (index < 4) {
+                    const centerIndex = 4; // The center "Resources" star
+                    this.connections.push({
+                        id: Date.now(),
+                        from: this.stars[index].id,
+                        to: this.stars[centerIndex].id,
+                        color: '#ffffff',
+                        style: this.selectedLineStyle,
+                        createdAt: new Date().toISOString()
+                    });
+                }
+            });
+        }
+
+        this.saveToStorage();
+        this.closeModal('templatesModal');
+        alert(`✅ Applied "${templateType}" template with ${this.stars.length} stars!`);
+    }
+
     updateMinimap() {
         if (!this.minimapCtx) return;
 
@@ -1274,6 +1707,9 @@ class ConstellationBuilder {
         // Draw stars
         this.drawStars();
 
+        // Draw selection box
+        this.drawSelectionBox();
+
         // Draw particles
         this.updateAndDrawParticles();
 
@@ -1347,6 +1783,17 @@ class ConstellationBuilder {
 
                 this.ctx.strokeStyle = gradient;
                 this.ctx.lineWidth = 2;
+
+                // Apply line style
+                const lineStyle = conn.style || 'solid';
+                if (lineStyle === 'dashed') {
+                    this.ctx.setLineDash([10, 10]);
+                } else if (lineStyle === 'dotted') {
+                    this.ctx.setLineDash([3, 8]);
+                } else {
+                    this.ctx.setLineDash([]);
+                }
+
                 this.ctx.stroke();
 
                 // Glow effect (skip for very faded connections)
