@@ -721,6 +721,8 @@ class ConstellationBuilder {
 
         if (format === 'png') {
             this.exportPNG();
+        } else if (format === 'svg') {
+            this.exportSVG();
         } else if (format === 'json') {
             this.exportJSON();
         }
@@ -733,6 +735,126 @@ class ConstellationBuilder {
         link.download = 'constellation.png';
         link.href = this.canvas.toDataURL('image/png');
         link.click();
+    }
+
+    exportSVG() {
+        // Calculate bounds
+        if (this.stars.length === 0) {
+            alert('No stars to export!');
+            return;
+        }
+
+        const padding = 50;
+        const xValues = this.stars.map(s => s.x);
+        const yValues = this.stars.map(s => s.y);
+        const minX = Math.min(...xValues) - padding;
+        const maxX = Math.max(...xValues) + padding;
+        const minY = Math.min(...yValues) - padding;
+        const maxY = Math.max(...yValues) + padding;
+
+        const width = maxX - minX;
+        const height = maxY - minY;
+
+        // Start building SVG
+        let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+        svg += `<svg xmlns="http://www.w3.org/2000/svg" `;
+        svg += `viewBox="${minX} ${minY} ${width} ${height}" `;
+        svg += `width="${width}" height="${height}">\n`;
+
+        // Add background
+        const bgColor = this.isDarkMode ? '#0a0a1a' : '#f5f5f5';
+        svg += `  <rect x="${minX}" y="${minY}" width="${width}" height="${height}" fill="${bgColor}"/>\n`;
+
+        // Add connections (draw them before stars so stars appear on top)
+        this.connections.forEach(conn => {
+            const star1 = this.stars.find(s => s.id === conn.from);
+            const star2 = this.stars.find(s => s.id === conn.to);
+
+            if (star1 && star2) {
+                // Calculate control point for curve
+                const dx = star2.x - star1.x;
+                const dy = star2.y - star1.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const curveIntensity = Math.min(distance * 0.15, 50);
+                const midX = (star1.x + star2.x) / 2;
+                const midY = (star1.y + star2.y) / 2;
+                const curveDirection = (star1.id % 2 === 0) ? 1 : -1;
+                const controlX = midX + (-dy / distance) * curveIntensity * curveDirection;
+                const controlY = midY + (dx / distance) * curveIntensity * curveDirection;
+
+                svg += `  <path d="M ${star1.x} ${star1.y} Q ${controlX} ${controlY} ${star2.x} ${star2.y}" `;
+                svg += `stroke="${conn.color}" stroke-width="2" fill="none" opacity="0.8"/>\n`;
+            }
+        });
+
+        // Add stars
+        this.stars.forEach(star => {
+            const shape = star.shape || 'circle';
+            const glowColor = this.hexToRgba(star.color, 0.3);
+
+            // Add glow effect
+            if (shape === 'circle') {
+                svg += `  <circle cx="${star.x}" cy="${star.y}" r="20" fill="${glowColor}"/>\n`;
+                svg += `  <circle cx="${star.x}" cy="${star.y}" r="8" fill="${star.color}" stroke="#ffffff" stroke-width="2"/>\n`;
+            } else if (shape === 'diamond') {
+                const size = 18;
+                const points = [
+                    [star.x, star.y - size],
+                    [star.x + size, star.y],
+                    [star.x, star.y + size],
+                    [star.x - size, star.y]
+                ];
+                svg += `  <polygon points="${points.map(p => p.join(',')).join(' ')}" fill="${glowColor}"/>\n`;
+                svg += `  <polygon points="${points.map(p => p.join(',')).join(' ')}" `;
+                svg += `fill="${star.color}" stroke="#ffffff" stroke-width="2" transform="scale(0.7) translate(${star.x * 0.43} ${star.y * 0.43})"/>\n`;
+            } else if (shape === 'hexagon') {
+                const size = 16;
+                const points = [];
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI * 2 * i / 6) - Math.PI / 2;
+                    points.push([star.x + size * Math.cos(angle), star.y + size * Math.sin(angle)]);
+                }
+                svg += `  <polygon points="${points.map(p => p.join(',')).join(' ')}" fill="${glowColor}"/>\n`;
+                svg += `  <polygon points="${points.map(p => p.join(',')).join(' ')}" `;
+                svg += `fill="${star.color}" stroke="#ffffff" stroke-width="2" transform="scale(0.7) translate(${star.x * 0.43} ${star.y * 0.43})"/>\n`;
+            } else if (shape === 'star') {
+                const outerR = 16;
+                const innerR = 6;
+                const points = [];
+                for (let i = 0; i < 10; i++) {
+                    const radius = i % 2 === 0 ? outerR : innerR;
+                    const angle = (Math.PI * i / 5) - Math.PI / 2;
+                    points.push([star.x + radius * Math.cos(angle), star.y + radius * Math.sin(angle)]);
+                }
+                svg += `  <polygon points="${points.map(p => p.join(',')).join(' ')}" fill="${glowColor}"/>\n`;
+                svg += `  <circle cx="${star.x}" cy="${star.y}" r="6" fill="${star.color}" stroke="#ffffff" stroke-width="2"/>\n`;
+            }
+
+            // Add title label
+            if (star.title) {
+                svg += `  <text x="${star.x}" y="${star.y + 35}" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" fill="#ffffff">${this.escapeSVG(star.title)}</text>\n`;
+            }
+        });
+
+        svg += '</svg>';
+
+        // Download
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
+        const link = document.createElement('a');
+        link.download = 'constellation.svg';
+        link.href = URL.createObjectURL(blob);
+        link.click();
+    }
+
+    escapeSVG(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
     }
 
     exportJSON() {
