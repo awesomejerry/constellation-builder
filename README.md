@@ -6,38 +6,77 @@ A beautiful, interactive web app for connecting your ideas into glowing constell
 
 ## ✨ Features
 
+### Core Functionality
 - **🌟 Add Stars** - Click anywhere to create new ideas
 - **🔗 Connect Ideas** - Drag between stars to create glowing connections
-- **✨ Edit Stars** - Double-click to add titles, descriptions, and tags
-- **🎨 Color Coding** - 6 beautiful colors to categorize your ideas
-- **📦 Auto-Save** - Your constellation is saved automatically in your browser
-- **📥 Export** - Save as PNG image or JSON backup
-- **🌙 Space Theme** - Animated background stars with twinkle effects
-- **📱 Responsive** - Works on desktop and mobile devices
+- **✏️ Edit Stars** - Double-click to add titles, descriptions, and tags
+- **🗑️ Delete Stars** - Remove stars and their connections
+- **🎯 Multi-Select** - Select multiple stars for batch operations
+
+### Star Properties
+- **📝 Title & Description** - Rich details for each idea
+- **🏷️ Tags** - Organize with comma-separated tags
+- **🎨 6 Colors** - White, Gold, Sky Blue, Coral, Pale Green, Plum Purple
+- **🔷 4 Shapes** - Circle, Diamond, Hexagon, Star
+- **⏰ Timestamps** - Created dates for reference
+
+### Navigation & View
+- **🔍 Zoom** - Mouse wheel or +/- buttons (0.25x to 4x)
+- **🖐️ Pan** - Shift + drag to move canvas
+- **🗺️ Minimap** - Click to jump to any area
+- **🌓 Dark/Light Theme** - Toggle between themes
+
+### Data Management
+- **💾 Auto-Save** - Automatically saved to browser localStorage
+- **📤 Export PNG** - Save as image for sharing
+- **📤 Export SVG** - Vector format for presentations
+- **📤 Export JSON** - Full data backup
+- **📥 Import JSON** - Restore from backup (Append/Replace)
+
+### Tools & Features
+- **↩️ Undo/Redo** - Ctrl+Z / Ctrl+Y (50 states)
+- **🔍 Search** - Find by title or tag (Ctrl+F)
+- **🔗 Connect by Tag** - Auto-link stars with matching tags
+- **🏷️ Tag Filter** - Show/hide stars by tag
+- **📊 Statistics** - View constellation metrics
+- **📋 Templates** - Pre-built starter constellations
+
+### Visual & UX
+- **✨ Particle Effects** - Animations on creation/connection
+- **🌟 Glow Effects** - Beautiful star and connection glows
+- **📱 Responsive** - Works on desktop, tablet, and mobile
+- **⌨️ Keyboard Shortcuts** - Space, Ctrl+F, Escape, 1-5 for modes
 
 ## 🚀 How to Use
 
-1. **Add Stars**: Select "Add Star" mode and click anywhere on the canvas
-2. **Connect Stars**: Select "Connect" mode and drag from one star to another
-3. **Move Stars**: Select "Move" mode to rearrange your constellation
-4. **Edit Stars**: Double-click any star to add title, description, and tags
-5. **Delete Stars**: Select "Delete" mode and click on stars to remove them
-6. **Change Colors**: Click on color buttons before adding/connecting
+### Modes (1-5 keys)
+1. **Add Star** - Click to create new ideas
+2. **Connect** - Drag between stars to link them
+3. **Move** - Rearrange your constellation
+4. **Delete** - Remove unwanted stars
+5. **Select** - Multi-select for batch operations
 
-## 💾 Data Storage
+### Actions
+- **Double-click** any star to edit its properties
+- **Shift + Drag** to pan the canvas
+- **Mouse Wheel** to zoom in/out
+- **Click Minimap** to navigate quickly
 
-All your constellations are automatically saved to your browser's local storage. You can also:
-- Export as PNG image for sharing
-- Export as JSON for full data backup
+## 📊 Statistics Available
 
-## 🎨 Colors Available
+- Total stars
+- Total connections
+- Average connections per star
+- Most connected star
+- Total tags
+- Most used tag
+- Oldest & newest stars
 
-- ⚪ White (Default)
-- 🟡 Gold
-- 🔵 Sky Blue
-- 🔴 Coral Red
-- 🟢 Pale Green
-- 🟣 Plum Purple
+## 🎨 Colors & Shapes
+
+**Colors:** ⚪ White · 🟡 Gold · 🔵 Sky Blue · 🔴 Coral · 🟢 Pale Green · 🟣 Plum Purple
+
+**Shapes:** ⭕ Circle · 💎 Diamond · ⬡ Hexagon · ⭐ Star
 
 ## 📱 Browser Support
 
