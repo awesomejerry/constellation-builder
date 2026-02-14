@@ -11,8 +11,8 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Features | 40 |
-| Completed | 40 |
+| Total Features | 41 |
+| Completed | 41 |
 | Completion Rate | **100%** |
 
 ---
@@ -67,6 +67,7 @@
 - [x] Export as JSON (full data backup)
 - [x] Import from JSON (Append/Replace modes)
 - [x] Auto-save to localStorage
+- [x] Shareable constellations (URL sharing with base64 encoding)
 
 ### Visual & UX
 - [x] Dark/Light theme toggle
@@ -81,6 +82,7 @@
 ## 📜 Changelog
 
 ### February 2026
+- ✅ Added shareable constellations (URL sharing with base64 encoding)
 - ✅ Fixed zoom buttons (added event handlers)
 - ✅ Added minimap click navigation
 - ✅ Added SVG vector export
@@ -98,7 +100,6 @@
 These are ideas for future versions if the project continues:
 
 - **Real-time collaboration** (WebRTC)
-- **Shareable constellations** (URL sharing, GitHub Gist)
 - **Cloud sync** with user accounts
 - **PWA support** (offline, installable)
 - **AI-powered auto-tagging**
