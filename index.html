@@ -27,7 +27,8 @@
                 <button id="themeToggleBtn" class="btn secondary">🌗 Theme</button>
                 <button id="resetViewBtn" class="btn secondary">📐 Reset</button>
                 <button id="searchBtn" class="btn secondary">🔍</button>
-                <button id="connectByTagBtn" class="btn secondary">🏷️</button>
+                <button id="connectByTagBtn" class="btn secondary">🔗🏷️</button>
+                <button id="filterTagsBtn" class="btn secondary">🏷️ Filter</button>
                 <button id="exportBtn" class="btn secondary">📥</button>
                 <button id="clearBtn" class="btn secondary">🗑️</button>
                 <button id="helpBtn" class="btn secondary">❓</button>
@@ -294,6 +295,30 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn primary" id="closeStats">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tag Filter Modal -->
+        <div id="tagFilterModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🏷️ Filter by Tags</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                            Click tags to toggle visibility. Stars with hidden tags will become transparent.
+                        </p>
+                    </div>
+                    <div id="tagFilterList" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        <!-- Tags will be populated here dynamically -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" id="showAllTags">Show All</button>
+                    <button class="btn primary" id="closeTagFilter">Close</button>
                 </div>
             </div>
         </div>

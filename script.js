@@ -17,6 +17,9 @@ class ConstellationBuilder {
         this.selectedStars = [];
         this.highlightedStars = [];
 
+        // Tag filtering
+        this.visibleTags = null; // null means show all, otherwise Set of visible tags
+
         // Undo/Redo
         this.undoStack = [];
         this.redoStack = [];
@@ -188,6 +191,11 @@ class ConstellationBuilder {
         document.getElementById('searchBtn').addEventListener('click', () => this.showSearch());
         document.getElementById('statsBtn').addEventListener('click', () => this.showStats());
         document.getElementById('importBtn').addEventListener('click', () => this.showImport());
+        document.getElementById('filterTagsBtn').addEventListener('click', () => this.showTagFilter());
+
+        // Tag filter modal events
+        document.getElementById('showAllTags').addEventListener('click', () => this.showAllTags());
+        document.getElementById('closeTagFilter').addEventListener('click', () => this.closeModal('tagFilterModal'));
 
         // Zoom buttons
         const zoomInBtn = document.getElementById('zoomInBtn');
@@ -985,6 +993,102 @@ class ConstellationBuilder {
         this.showModal('statsModal');
     }
 
+    showTagFilter() {
+        // Collect all unique tags
+        const allTags = new Set();
+        this.stars.forEach(star => {
+            if (star.tags) {
+                star.tags.forEach(tag => allTags.add(tag));
+            }
+        });
+
+        if (allTags.size === 0) {
+            document.getElementById('tagFilterList').innerHTML = '<p style="color: #888;">No tags found. Add tags to stars to use filtering.</p>';
+            this.showModal('tagFilterModal');
+            return;
+        }
+
+        // Build tag list UI
+        const tagFilterList = document.getElementById('tagFilterList');
+        tagFilterList.innerHTML = '';
+
+        // Sort tags alphabetically
+        const sortedTags = Array.from(allTags).sort();
+
+        sortedTags.forEach(tag => {
+            const tagEl = document.createElement('button');
+            tagEl.className = 'tag-filter-item';
+            tagEl.style.cssText = `
+                padding: 8px 16px;
+                border-radius: 20px;
+                border: 2px solid var(--border-color);
+                background: var(--panel-bg);
+                color: var(--text-primary);
+                cursor: pointer;
+                transition: all 0.3s ease;
+            `;
+
+            // Check if tag is currently hidden
+            const isHidden = this.visibleTags && !this.visibleTags.has(tag);
+            if (isHidden) {
+                tagEl.style.opacity = '0.3';
+                tagEl.style.borderColor = 'rgba(255, 100, 100, 0.5)';
+            } else {
+                tagEl.style.borderColor = 'var(--accent)';
+            }
+
+            tagEl.textContent = tag;
+            tagEl.addEventListener('click', () => this.toggleTag(tag, tagEl));
+            tagFilterList.appendChild(tagEl);
+        });
+
+        this.showModal('tagFilterModal');
+    }
+
+    toggleTag(tag, tagEl) {
+        // Initialize visibleTags Set if needed
+        if (!this.visibleTags) {
+            // Collect all tags initially
+            const allTags = new Set();
+            this.stars.forEach(star => {
+                if (star.tags) {
+                    star.tags.forEach(t => allTags.add(t));
+                }
+            });
+            this.visibleTags = allTags;
+        }
+
+        // Toggle the tag
+        if (this.visibleTags.has(tag)) {
+            this.visibleTags.delete(tag);
+            tagEl.style.opacity = '0.3';
+            tagEl.style.borderColor = 'rgba(255, 100, 100, 0.5)';
+        } else {
+            this.visibleTags.add(tag);
+            tagEl.style.opacity = '1';
+            tagEl.style.borderColor = 'var(--accent)';
+        }
+    }
+
+    showAllTags() {
+        this.visibleTags = null; // null means show all
+
+        // Reset all tag buttons styling
+        const tagButtons = document.querySelectorAll('.tag-filter-item');
+        tagButtons.forEach(btn => {
+            btn.style.opacity = '1';
+            btn.style.borderColor = 'var(--accent)';
+        });
+    }
+
+    isTagVisible(star) {
+        if (!this.visibleTags) return true; // No filter applied
+        if (!star.tags || star.tags.length === 0) return true; // No tags on star
+
+        // Star is visible if ANY of its tags are visible
+        return star.tags.some(tag => this.visibleTags.has(tag));
+    }
+
     updateMinimap() {
         if (!this.minimapCtx) return;
 
@@ -1202,6 +1306,18 @@ class ConstellationBuilder {
             const star2 = this.stars.find(s => s.id === conn.to);
 
             if (star1 && star2) {
+                // Check tag visibility for both stars
+                const star1Visible = this.isTagVisible(star1);
+                const star2Visible = this.isTagVisible(star2);
+
+                // Calculate opacity based on visibility
+                let opacity = 1.0;
+                if (!star1Visible && !star2Visible) {
+                    opacity = 0.1; // Both hidden
+                } else if (!star1Visible || !star2Visible) {
+                    opacity = 0.3; // One hidden
+                }
+
                 // Calculate distance for curve intensity
                 const dx = star2.x - star1.x;
                 const dy = star2.y - star1.y;
@@ -1225,19 +1341,21 @@ class ConstellationBuilder {
 
                 // Gradient stroke
                 const gradient = this.ctx.createLinearGradient(star1.x, star1.y, star2.x, star2.y);
-                gradient.addColorStop(0, this.hexToRgba(star1.color, 0.8));
-                gradient.addColorStop(0.5, this.hexToRgba(conn.color, 0.6));
-                gradient.addColorStop(1, this.hexToRgba(star2.color, 0.8));
+                gradient.addColorStop(0, this.hexToRgba(star1.color, 0.8 * opacity));
+                gradient.addColorStop(0.5, this.hexToRgba(conn.color, 0.6 * opacity));
+                gradient.addColorStop(1, this.hexToRgba(star2.color, 0.8 * opacity));
 
                 this.ctx.strokeStyle = gradient;
                 this.ctx.lineWidth = 2;
                 this.ctx.stroke();
 
-                // Glow effect
-                this.ctx.shadowColor = conn.color;
-                this.ctx.shadowBlur = 10;
-                this.ctx.stroke();
-                this.ctx.shadowBlur = 0;
+                // Glow effect (skip for very faded connections)
+                if (opacity > 0.2) {
+                    this.ctx.shadowColor = conn.color;
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.stroke();
+                    this.ctx.shadowBlur = 0;
+                }
             }
         });
     }
@@ -1249,36 +1367,50 @@ class ConstellationBuilder {
 
     drawStars() {
         this.stars.forEach(star => {
-            // Glow effect
-            const gradient = this.ctx.createRadialGradient(
-                star.x, star.y, 0,
-                star.x, star.y, 20
-            );
-            gradient.addColorStop(0, this.hexToRgba(star.color, 0.8));
-            gradient.addColorStop(0.5, this.hexToRgba(star.color, 0.3));
-            gradient.addColorStop(1, 'transparent');
+            // Check tag visibility
+            const isTagVisible = this.isTagVisible(star);
 
-            // Draw shape based on star.shape
-            const shape = star.shape || 'circle';
-            if (shape === 'circle') {
-                this.drawCircle(star, gradient);
-            } else if (shape === 'diamond') {
-                this.drawDiamond(star, gradient);
-            } else if (shape === 'hexagon') {
-                this.drawHexagon(star, gradient);
-            } else if (shape === 'star') {
-                this.drawStarShape(star, gradient);
-            }
-
-            // Title label
-            if (star.title) {
-                this.ctx.font = '12px Segoe UI, sans-serif';
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.textAlign = 'center';
-                this.ctx.textBaseline = 'middle';
-                this.ctx.fillText(star.title, star.x, star.y + 25);
+            // Skip drawing completely if tag is hidden (optional: make transparent instead)
+            if (!isTagVisible) {
+                // Draw faded version
+                this.drawStar(star, 0.15); // 15% opacity
+            } else {
+                // Draw normally
+                this.drawStar(star, 1.0);
             }
         });
+    }
+
+    drawStar(star, opacity) {
+        // Glow effect
+        const gradient = this.ctx.createRadialGradient(
+            star.x, star.y, 0,
+            star.x, star.y, 20
+        );
+        gradient.addColorStop(0, this.hexToRgba(star.color, 0.8 * opacity));
+        gradient.addColorStop(0.5, this.hexToRgba(star.color, 0.3 * opacity));
+        gradient.addColorStop(1, 'transparent');
+
+        // Draw shape based on star.shape
+        const shape = star.shape || 'circle';
+        if (shape === 'circle') {
+            this.drawCircle(star, gradient);
+        } else if (shape === 'diamond') {
+            this.drawDiamond(star, gradient);
+        } else if (shape === 'hexagon') {
+            this.drawHexagon(star, gradient);
+        } else if (shape === 'star') {
+            this.drawStarShape(star, gradient);
+        }
+
+        // Title label
+        if (star.title) {
+            this.ctx.font = '12px Segoe UI, sans-serif';
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(star.title, star.x, star.y + 25);
+        }
     }
 
     drawCircle(star, gradient) {
