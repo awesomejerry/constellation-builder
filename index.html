@@ -31,6 +31,7 @@
                 <button id="filterTagsBtn" class="btn secondary">🏷️ Filter</button>
                 <button id="templatesBtn" class="btn secondary">📚 Templates</button>
                 <button id="exportBtn" class="btn secondary">📥</button>
+                <button id="shareBtn" class="btn secondary">🔗</button>
                 <button id="clearBtn" class="btn secondary">🗑️</button>
                 <button id="helpBtn" class="btn secondary">❓</button>
             </div>
@@ -275,6 +276,31 @@
                 <div class="modal-footer">
                     <button class="btn secondary" id="cancelImport">Cancel</button>
                     <button class="btn primary" id="confirmImport">Import</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Share Modal -->
+        <div id="shareModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🔗 Share Constellation</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 16px; color: var(--text-secondary);">Share your constellation via link. Anyone with the link can view and edit a copy.</p>
+                    <div class="form-group">
+                        <label>Shareable Link</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="shareLink" readonly style="flex: 1; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px;">
+                            <button class="btn primary" id="copyShareLink">📋 Copy</button>
+                        </div>
+                    </div>
+                    <p id="shareWarning" class="hidden" style="color: #ff9800; font-size: 13px; margin-top: 8px;">⚠️ This constellation is large. Consider using JSON export for reliable sharing.</p>
+                    <p id="shareSuccess" class="hidden" style="color: #4caf50; font-size: 13px; margin-top: 8px;">✅ Link copied to clipboard!</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" id="cancelShare">Close</button>
                 </div>
             </div>
         </div>

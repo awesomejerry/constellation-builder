@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Share Functionality</title>
+</head>
+<body>
+    <h1>Share Functionality Test</h1>
+    <button onclick="testShare()">Test Share Link</button>
+    <div id="output"></div>
+
+    <script>
+        // Simple test data
+        const testData = {
+            stars: [
+                { id: 1, x: 100, y: 100, title: "Star 1", color: "#ffffff" },
+                { id: 2, x: 200, y: 200, title: "Star 2", color: "#ffd700" }
+            ],
+            connections: [],
+            sharedAt: new Date().toISOString()
+        };
+
+        function testShare() {
+            const jsonStr = JSON.stringify(testData);
+            const encoded = btoa(jsonStr);
+            const shareUrl = `${window.location.origin}${window.location.pathname}?constellation=${encodeURIComponent(encoded)}`;
+
+            document.getElementById('output').innerHTML = `
+                <p><strong>Original Data:</strong></p>
+                <pre>${JSON.stringify(testData, null, 2)}</pre>
+                <p><strong>Encoded URL:</strong></p>
+                <textarea rows="5" cols="80">${shareUrl}</textarea>
+                <p><a href="${shareUrl}" target="_blank">Test Link (opens in new tab)</a></p>
+            `;
+        }
+
+        // Check if we loaded with constellation data
+        const urlParams = new URLSearchParams(window.location.search);
+        const constellationData = urlParams.get('constellation');
+
+        if (constellationData) {
+            try {
+                const jsonStr = atob(constellationData);
+                const data = JSON.parse(jsonStr);
+
+                document.getElementById('output').innerHTML = `
+                    <h2>✅ Successfully loaded from URL!</h2>
+                    <p><strong>Decoded Data:</strong></p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (e) {
+                document.getElementById('output').innerHTML = `
+                    <h2>❌ Error loading from URL</h2>
+                    <p>${e.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

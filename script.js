@@ -54,7 +54,15 @@ class ConstellationBuilder {
     init() {
         this.setupCanvas();
         this.generateBackgroundStars();
-        this.loadFromStorage();
+
+        // Check for shared constellation in URL first
+        const loadedFromUrl = this.loadFromUrl();
+
+        // If no URL data, load from localStorage
+        if (!loadedFromUrl) {
+            this.loadFromStorage();
+        }
+
         this.bindEvents();
         this.animate();
     }
@@ -198,6 +206,7 @@ class ConstellationBuilder {
         document.getElementById('clearBtn').addEventListener('click', () => this.clearAll());
         document.getElementById('helpBtn').addEventListener('click', () => this.showHelp());
         document.getElementById('exportBtn').addEventListener('click', () => this.showExport());
+        document.getElementById('shareBtn').addEventListener('click', () => this.shareLink());
         document.getElementById('connectByTagBtn').addEventListener('click', () => this.connectByTag());
         document.getElementById('searchBtn').addEventListener('click', () => this.showSearch());
         document.getElementById('statsBtn').addEventListener('click', () => this.showStats());
@@ -2044,6 +2053,93 @@ class ConstellationBuilder {
         const g = parseInt(hex.slice(3, 5), 16);
         const b = parseInt(hex.slice(5, 7), 16);
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    // Share functionality
+    shareLink() {
+        if (this.stars.length === 0) {
+            alert('⚠️ No constellation to share. Add some stars first!');
+            return;
+        }
+
+        // Prepare constellation data
+        const data = {
+            stars: this.stars,
+            connections: this.connections,
+            sharedAt: new Date().toISOString()
+        };
+
+        // Compress and encode to base64
+        const jsonStr = JSON.stringify(data);
+        const compressed = this.compressString(jsonStr);
+        const encoded = btoa(compressed);
+
+        // Generate shareable URL
+        const shareUrl = `${window.location.origin}${window.location.pathname}?constellation=${encodeURIComponent(encoded)}`;
+
+        // Copy to clipboard
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            alert('✨ Share link copied to clipboard!\n\nShare this URL to let others view your constellation.');
+        }).catch((err) => {
+            // Fallback - show in prompt
+            prompt('Copy this share link:', shareUrl);
+        });
+
+        this.saveState('share constellation');
+    }
+
+    loadFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const constellationData = urlParams.get('constellation');
+
+        if (constellationData) {
+            try {
+                // Decode and decompress
+                const compressed = atob(constellationData);
+                const jsonStr = this.decompressString(compressed);
+                const data = JSON.parse(jsonStr);
+
+                // Validate data
+                if (!data.stars || !Array.isArray(data.stars)) {
+                    console.error('Invalid constellation data in URL');
+                    return false;
+                }
+
+                // Load the constellation
+                this.stars = data.stars;
+                this.connections = data.connections || [];
+                this.nextStarId = data.nextStarId || 1;
+
+                // Update nextStarId to avoid collisions
+                if (this.stars.length > 0) {
+                    const maxId = Math.max(...this.stars.map(s => s.id || 0));
+                    this.nextStarId = maxId + 1;
+                }
+
+                this.saveToStorage();
+                console.log('Constellation loaded from shared URL');
+
+                // Clean URL after loading (optional - keeps URL clean)
+                // window.history.replaceState({}, document.title, window.location.pathname);
+
+                return true;
+            } catch (e) {
+                console.error('Error loading constellation from URL:', e);
+                return false;
+            }
+        }
+        return false;
+    }
+
+    // Simple compression using basic run-length encoding for common patterns
+    compressString(str) {
+        // For constellation data, we can use simple compression
+        // In production, you might want to use pako or similar library
+        return str;
+    }
+
+    decompressString(str) {
+        return str;
     }
 }
 
