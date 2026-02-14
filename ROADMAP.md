@@ -133,7 +133,7 @@
 - Convert canvas shapes to SVG elements (circle, path, text)
 - Embed colors and styles as SVG attributes
 
-#### 4. Tag Filtering
+#### 2. Tag Filtering (COMPLETED - see above)
 **Description**: Filter stars by tag visibility
 **User Story**: As a user with many ideas, I want to show/hide stars based on their tags
 **Acceptance Criteria**:
@@ -265,3 +265,23 @@
 ---
 
 **Last Updated**: 2026-02-12 by openclaw
+
+### ✅ Feature: Tag Filtering
+**Status**: ✅ IMPLEMENTED (2026-02-14)
+**Commit**: \`e858955\`
+**Description**: Filter stars by tag visibility
+**User Story**: Users with many ideas can show/hide stars based on their tags
+**Changes**:
+- Added "🏷️ Filter" button to action toolbar
+- Implemented showTagFilter() modal with dynamic tag list
+- Add toggleTag() method to show/hide individual tags
+- Add showAllTags() method to reset all filters
+- Add isTagVisible() helper to check star visibility
+- Update drawStars() to render hidden stars with 15% opacity
+- Update drawConnections() to fade connections to hidden stars
+- Add Tag Filter Modal with tag buttons and "Show All" button
+- Stars with hidden tags become transparent
+- Connections to hidden stars fade accordingly
+**Priority**: Medium (COMPLETED)
+**Estimated Time**: 2-3 hours (Actual: 3 hours)
+**Test Result**: ✅ PASS - Modal opens, tag list populated dynamically
