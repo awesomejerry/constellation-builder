@@ -217,6 +217,23 @@ class ConstellationBuilder {
         document.getElementById('templatesBtn').addEventListener('click', () => this.showTemplates());
         document.getElementById('cancelTemplates').addEventListener('click', () => this.closeModal('templatesModal'));
 
+        // Layout
+        document.getElementById('layoutBtn').addEventListener('click', () => this.showLayout());
+        document.getElementById('cancelLayout').addEventListener('click', () => this.closeModal('layoutModal'));
+
+        // Layout padding slider
+        const layoutPaddingSlider = document.getElementById('layoutPadding');
+        if (layoutPaddingSlider) {
+            layoutPaddingSlider.addEventListener('input', (e) => {
+                document.getElementById('layoutPaddingValue').textContent = e.target.value;
+            });
+        }
+
+        // Layout option buttons
+        document.querySelectorAll('[data-layout]').forEach(btn => {
+            btn.addEventListener('click', (e) => this.applyLayout(e.target.closest('[data-layout]').dataset.layout));
+        });
+
         // Tag filter modal events
         document.getElementById('showAllTags').addEventListener('click', () => this.showAllTags());
         document.getElementById('closeTagFilter').addEventListener('click', () => this.closeModal('tagFilterModal'));
@@ -2140,6 +2157,197 @@ class ConstellationBuilder {
 
     decompressString(str) {
         return str;
+    }
+
+    // Layout methods
+    showLayout() {
+        if (this.stars.length === 0) {
+            alert('⚠️ No stars to layout. Add some stars first!');
+            return;
+        }
+        this.showModal('layoutModal');
+    }
+
+    applyLayout(layoutType) {
+        if (this.stars.length === 0) {
+            alert('⚠️ No stars to layout');
+            return;
+        }
+
+        this.saveState('apply layout');
+
+        const padding = parseInt(document.getElementById('layoutPadding').value) || 100;
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        const availableWidth = this.canvas.width - padding * 2;
+        const availableHeight = this.canvas.height - padding * 2;
+
+        switch (layoutType) {
+            case 'force':
+                this.forceDirectedLayout(padding);
+                break;
+            case 'circle':
+                this.circleLayout(centerX, centerY, Math.min(availableWidth, availableHeight) / 2);
+                break;
+            case 'grid':
+                this.gridLayout(padding);
+                break;
+            case 'radial':
+                this.radialLayout(centerX, centerY, Math.min(availableWidth, availableHeight) / 3);
+                break;
+        }
+
+        this.closeModal('layoutModal');
+        this.saveToStorage();
+    }
+
+    // Force-directed layout using simple physics simulation
+    forceDirectedLayout(padding) {
+        const iterations = 100;
+        const repulsion = 5000; // Repulsion force between nodes
+        const attraction = 0.06; // Attraction force along edges
+        const damping = 0.9; // Damping factor
+
+        // Initialize velocities
+        const velocities = this.stars.map(() => ({ vx: 0, vy: 0 }));
+
+        for (let iter = 0; iter < iterations; iter++) {
+            // Calculate repulsion forces between all pairs
+            for (let i = 0; i < this.stars.length; i++) {
+                for (let j = i + 1; j < this.stars.length; j++) {
+                    const dx = this.stars[j].x - this.stars[i].x;
+                    const dy = this.stars[j].y - this.stars[i].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const force = repulsion / (distance * distance);
+
+                    const fx = (dx / distance) * force;
+                    const fy = (dy / distance) * force;
+
+                    velocities[i].vx -= fx;
+                    velocities[i].vy -= fy;
+                    velocities[j].vx += fx;
+                    velocities[j].vy += fy;
+                }
+            }
+
+            // Calculate attraction forces along connections
+            for (const conn of this.connections) {
+                const star1 = this.stars.find(s => s.id === conn.from);
+                const star2 = this.stars.find(s => s.id === conn.to);
+
+                if (star1 && star2) {
+                    const dx = star2.x - star1.x;
+                    const dy = star2.y - star1.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+
+                    const fx = (dx / distance) * distance * attraction;
+                    const fy = (dy / distance) * distance * attraction;
+
+                    const idx1 = this.stars.indexOf(star1);
+                    const idx2 = this.stars.indexOf(star2);
+
+                    velocities[idx1].vx += fx;
+                    velocities[idx1].vy += fy;
+                    velocities[idx2].vx -= fx;
+                    velocities[idx2].vy -= fy;
+                }
+            }
+
+            // Apply velocities with damping
+            for (let i = 0; i < this.stars.length; i++) {
+                velocities[i].vx *= damping;
+                velocities[i].vy *= damping;
+
+                this.stars[i].x += velocities[i].vx;
+                this.stars[i].y += velocities[i].vy;
+
+                // Keep within bounds
+                this.stars[i].x = Math.max(padding, Math.min(this.canvas.width - padding, this.stars[i].x));
+                this.stars[i].y = Math.max(padding, Math.min(this.canvas.height - padding, this.stars[i].y));
+            }
+        }
+    }
+
+    // Circle layout - arrange stars in a circle
+    circleLayout(centerX, centerY, radius) {
+        const angleStep = (2 * Math.PI) / this.stars.length;
+
+        for (let i = 0; i < this.stars.length; i++) {
+            const angle = i * angleStep - Math.PI / 2; // Start from top
+            this.stars[i].x = centerX + radius * Math.cos(angle);
+            this.stars[i].y = centerY + radius * Math.sin(angle);
+        }
+    }
+
+    // Grid layout - arrange stars in a grid
+    gridLayout(padding) {
+        const availableWidth = this.canvas.width - padding * 2;
+        const availableHeight = this.canvas.height - padding * 2;
+
+        const cols = Math.ceil(Math.sqrt(this.stars.length));
+        const rows = Math.ceil(this.stars.length / cols);
+
+        const cellWidth = availableWidth / cols;
+        const cellHeight = availableHeight / rows;
+
+        for (let i = 0; i < this.stars.length; i++) {
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+
+            this.stars[i].x = padding + cellWidth * (col + 0.5);
+            this.stars[i].y = padding + cellHeight * (row + 0.5);
+        }
+    }
+
+    // Radial layout - center with connected stars radiating outward
+    radialLayout(centerX, centerY, radius) {
+        if (this.stars.length === 0) return;
+
+        // Find the most connected star as center
+        const connectionCounts = this.stars.map(star => {
+            return this.connections.filter(c => c.from === star.id || c.to === star.id).length;
+        });
+
+        const centerIdx = connectionCounts.indexOf(Math.max(...connectionCounts));
+        const centerStar = this.stars[centerIdx];
+
+        // Place center star at canvas center
+        centerStar.x = centerX;
+        centerStar.y = centerY;
+
+        // Get directly connected stars
+        const connectedStars = this.stars.filter(star => {
+            if (star.id === centerStar.id) return false;
+            return this.connections.some(c =>
+                (c.from === centerStar.id && c.to === star.id) ||
+                (c.to === centerStar.id && c.from === star.id)
+            );
+        });
+
+        // Get unconnected stars
+        const unconnectedStars = this.stars.filter(star => {
+            return star.id !== centerStar.id && !connectedStars.includes(star);
+        });
+
+        // Arrange connected stars in inner circle
+        const innerRadius = radius * 0.6;
+        const angleStepInner = (2 * Math.PI) / Math.max(connectedStars.length, 1);
+
+        for (let i = 0; i < connectedStars.length; i++) {
+            const angle = i * angleStepInner - Math.PI / 2;
+            connectedStars[i].x = centerX + innerRadius * Math.cos(angle);
+            connectedStars[i].y = centerY + innerRadius * Math.sin(angle);
+        }
+
+        // Arrange unconnected stars in outer circle
+        const outerRadius = radius;
+        const angleStepOuter = (2 * Math.PI) / Math.max(unconnectedStars.length, 1);
+
+        for (let i = 0; i < unconnectedStars.length; i++) {
+            const angle = i * angleStepOuter - Math.PI / 2;
+            unconnectedStars[i].x = centerX + outerRadius * Math.cos(angle);
+            unconnectedStars[i].y = centerY + outerRadius * Math.sin(angle);
+        }
     }
 }
 

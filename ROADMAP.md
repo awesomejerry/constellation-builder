@@ -11,8 +11,8 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Features | 41 |
-| Completed | 41 |
+| Total Features | 42 |
+| Completed | 42 |
 | Completion Rate | **100%** |
 
 ---
@@ -60,6 +60,7 @@
 - [x] Particle effects (on star creation/connection)
 - [x] Statistics modal
 - [x] Templates
+- [x] Auto-layout algorithms (force-directed, circle, grid, radial)
 
 ### Data Management
 - [x] Export as PNG image
@@ -82,6 +83,7 @@
 ## 📜 Changelog
 
 ### February 2026
+- ✅ Added auto-layout algorithms (force-directed, circle, grid, radial)
 - ✅ Added shareable constellations (URL sharing with base64 encoding)
 - ✅ Fixed zoom buttons (added event handlers)
 - ✅ Added minimap click navigation
@@ -105,7 +107,6 @@ These are ideas for future versions if the project continues:
 - **AI-powered auto-tagging**
 - **Import from other formats** (MindManager, XMind, Freemind)
 - **Export to presentation formats** (PDF, PPTX)
-- **Auto-layout algorithms** (force-directed, circle, grid)
 - **Constellation gallery/sharing**
 
 ---

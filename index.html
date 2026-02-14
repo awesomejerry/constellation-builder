@@ -32,6 +32,7 @@
                 <button id="templatesBtn" class="btn secondary">📚 Templates</button>
                 <button id="exportBtn" class="btn secondary">📥</button>
                 <button id="shareBtn" class="btn secondary">🔗</button>
+                <button id="layoutBtn" class="btn secondary">📐 Layout</button>
                 <button id="clearBtn" class="btn secondary">🗑️</button>
                 <button id="helpBtn" class="btn secondary">❓</button>
             </div>
@@ -411,6 +412,48 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn secondary" id="cancelTemplates">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Layout Modal -->
+        <div id="layoutModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📐 Auto Layout</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="template-options">
+                        <button class="template-option" data-layout="force">
+                            <span class="template-icon">⚡</span>
+                            <span class="template-label">Force-Directed</span>
+                            <span class="template-desc">Spread stars naturally with physics simulation</span>
+                        </button>
+                        <button class="template-option" data-layout="circle">
+                            <span class="template-icon">⭕</span>
+                            <span class="template-label">Circle</span>
+                            <span class="template-desc">Arrange stars in a circular pattern</span>
+                        </button>
+                        <button class="template-option" data-layout="grid">
+                            <span class="template-icon">⊞</span>
+                            <span class="template-label">Grid</span>
+                            <span class="template-desc">Organize stars in a regular grid</span>
+                        </button>
+                        <button class="template-option" data-layout="radial">
+                            <span class="template-icon">🎯</span>
+                            <span class="template-label">Radial</span>
+                            <span class="template-desc">Center star with connected stars radiating outward</span>
+                        </button>
+                    </div>
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label for="layoutPadding">Padding (px):</label>
+                        <input type="range" id="layoutPadding" min="50" max="200" value="100">
+                        <span id="layoutPaddingValue">100</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" id="cancelLayout">Cancel</button>
                 </div>
             </div>
         </div>
