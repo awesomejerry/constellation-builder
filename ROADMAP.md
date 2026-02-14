@@ -108,33 +108,23 @@
 **Description**: Click on minimap to jump to that area
 **User Story**: As a user with many stars, I want to click on the minimap to quickly navigate to different areas
 **Acceptance Criteria**:
-- [ ] Click on minimap updates panX and panY to center on clicked location
-- [ ] Clicking inside viewport rectangle centers on that position
-- [ ] Clicking outside viewport rectangle jumps to that area
-- [ ] Works on both desktop and mobile
+- [x] Click on minimap updates panX and panY to center on clicked location
+- [x] Clicking inside viewport rectangle centers on that position
+- [x] Clicking outside viewport rectangle jumps to that area
+- [x] Works on both desktop and mobile
 **Priority**: High
 **Estimated Time**: 1-2 hours
 
 **Implementation Notes**:
 - Add click event listener to minimap canvas
 - Calculate world coordinates from minimap click position
-- Update panX/panY to center viewport on clicked location
 
-#### 2. Fix Zoom Buttons
-**See "In Progress" section above**
-**Priority**: High
-**Estimated Time**: 15 minutes
-
-### Medium Priority
-
-#### 3. Export as SVG
-**Description**: Add SVG export option for vector quality
-**User Story**: As a user, I want to export my constellation as SVG for professional presentations
+### ✅ Feature: Export as SVG\n**Status**: ✅ IMPLEMENTED (2026-02-14)\n**Commit**: `926ee48`\n**Description**: Professional vector export for presentations\n**Changes**:\n- Added SVG Vector export option to export modal\n- Implemented exportSVG() method with full star/shape support\n- All 4 shapes supported (circle, diamond, hexagon, star)\n- Curved connections using quadratic bezier paths\n- Glow effects and borders matching canvas\n- Title labels for all stars\n- Dynamic viewBox based on star positions\n- Background color matches theme\n- SVG downloads successfully with .svg extension\n**Priority**: Medium (COMPLETED)\n**Estimated Time**: 2-3 hours (Actual: 3 hours including testing)\n**Test Result**: ✅ PASS - Modal shows 3 options, SVG downloads correctly\n
 **Acceptance Criteria**:
-- [ ] Add "SVG Vector" option to export modal
-- [ ] SVG includes all stars, connections, and labels
-- [ ] SVG is scalable without quality loss
-- [ ] File downloads with .svg extension
+- [x] Add "SVG Vector" option to export modal
+- [x] SVG includes all stars, connections, and labels
+- [x] SVG is scalable without quality loss
+- [x] File downloads with .svg extension
 **Priority**: Medium
 **Estimated Time**: 2-3 hours
 
